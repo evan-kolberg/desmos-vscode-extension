@@ -22,6 +22,9 @@
   <script>
     const vscode = acquireVsCodeApi();
     const Calc = Desmos.GraphingCalculator(document.getElementById('calculator'));
+    Calc.observeEvent('change', () => {
+      vscode.postMessage({ command: "tempState", data: Calc.getState() });
+    });
     window.addEventListener("message", (event) => {
       if (event.data.command === "export") {
         const state = Calc.getState();

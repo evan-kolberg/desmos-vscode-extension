@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 let panel;
+let tempState = null;
 
 class DesmosDataProvider {
   getTreeItem(element) { return element; }
@@ -15,31 +16,52 @@ class DesmosDataProvider {
   }
 }
 
+function openDesmos(restoredState) {
+  panel = vscode.window.createWebviewPanel(
+    "desmosCalcView",
+    "Desmos Calculator",
+    vscode.ViewColumn.One,
+    { enableScripts: true, retainContextWhenHidden: true }
+  );
+  const webviewUri = vscode.Uri.file(path.join(__dirname, "webview.html"));
+  panel.webview.html = fs.readFileSync(webviewUri.fsPath, "utf8");
+
+  panel.webview.onDidReceiveMessage(async (message) => {
+    if (message.command === "calcState") {
+      const saveUri = await vscode.window.showSaveDialog({ filters: { JSON: ["json"] } });
+      if (saveUri) {
+        fs.writeFileSync(saveUri.fsPath, JSON.stringify(message.data, null, 2));
+        vscode.window.showInformationMessage("State exported");
+      }
+    }
+    if (message.command === "tempState") {
+      tempState = message.data;
+    }
+  });
+
+  panel.onDidDispose(async () => {
+    const answer = await vscode.window.showWarningMessage(
+      "Are you sure you want to close this panel?",
+      "Yes","No"
+    );
+    if (answer === "No") {
+      openDesmos(tempState);
+    } else {
+      tempState = null;
+    }
+  });
+
+  // After panel loads, restore if provided
+  if (restoredState) {
+    panel.webview.postMessage({ command: "import", data: restoredState });
+  }
+}
+
 function activate(context) {
   vscode.window.registerTreeDataProvider("desmosCalcView", new DesmosDataProvider());
 
   let disposableOpen = vscode.commands.registerCommand("extension.openDesmos", () => {
-    panel = vscode.window.createWebviewPanel(
-      "desmosCalcView",
-      "Desmos Calculator",
-      vscode.ViewColumn.One,
-      { enableScripts: true,
-        retainContextWhenHidden: true
-       }
-    );
-
-    const webviewUri = vscode.Uri.file(path.join(__dirname, "webview.html"));
-    panel.webview.html = fs.readFileSync(webviewUri.fsPath, "utf8");
-
-    panel.webview.onDidReceiveMessage(async (message) => {
-      if (message.command === "calcState") {
-        const saveUri = await vscode.window.showSaveDialog({ filters: { JSON: ["json"] } });
-        if (saveUri) {
-          fs.writeFileSync(saveUri.fsPath, JSON.stringify(message.data, null, 2));
-          vscode.window.showInformationMessage("State exported");
-        }
-      }
-    });
+    openDesmos(null);
   });
 
   let disposableExport = vscode.commands.registerCommand("extension.exportJson", () => {
