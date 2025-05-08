@@ -23,7 +23,9 @@ function activate(context) {
       "desmosCalcView",
       "Desmos Calculator",
       vscode.ViewColumn.One,
-      { enableScripts: true }
+      { enableScripts: true,
+        retainContextWhenHidden: true
+       }
     );
 
     const webviewUri = vscode.Uri.file(path.join(__dirname, "webview.html"));

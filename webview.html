@@ -30,15 +30,6 @@
         Calc.setState(event.data.data);
       }
     });
-    window.addEventListener("beforeunload", () => {
-      localStorage.setItem("calcState", JSON.stringify(Calc.getState()));
-    });
-    window.addEventListener("DOMContentLoaded", () => {
-      const storedState = localStorage.getItem("calcState");
-      if (storedState) {
-        Calc.setState(JSON.parse(storedState));
-      }
-    });
   </script>
 </body>
 </html>
