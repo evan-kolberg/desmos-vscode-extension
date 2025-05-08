@@ -1,0 +1,49 @@
+{
+  "name": "desmos-extension",
+  "displayName": "Desmos Extension",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "activationEvents": [
+    "onView:desmosCalcView",
+    "onCommand:extension.openDesmos"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "desmosViewContainer",
+          "title": "Desmos",
+          "icon": "./desmos.png"
+        }
+      ]
+    },
+    "views": {
+      "desmosViewContainer": [
+        {
+          "id": "desmosCalcView",
+          "name": "Desmos Calculator"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "extension.openDesmos",
+        "title": "Open Desmos Calculator"
+      },
+      {
+        "command": "extension.exportJson",
+        "title": "Export JSON"
+      },
+      {
+        "command": "extension.importJson",
+        "title": "Import JSON"
+      }
+    ]
+  },
+  "dependencies": {
+    "vscode": "^1.1.34"
+  }
+}
