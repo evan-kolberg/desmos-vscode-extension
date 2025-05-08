@@ -4,6 +4,7 @@ const fs = require('fs');
 
 let panel = null;
 let tempState = null;
+let isConfirmationDialogActive = false;
 
 class DesmosDataProvider {
   getTreeItem(element) {
@@ -62,17 +63,23 @@ function createDesmosPanel(title, viewType, htmlContent, restoredState, extensio
         vscode.window.showInformationMessage("Work exported");
       }
     } else if (message.command === "tempState") {
-      tempState = message.data; // Always keep the latest state
+      tempState = message.data;
     }
   });
 
   panel.onDidDispose(async () => {
+    if (isConfirmationDialogActive) return;
+    isConfirmationDialogActive = true;
+
     const answer = await vscode.window.showWarningMessage(
       "Are you sure you wanted to close Desmos?",
       "No! Go back now!", "Yes & discard any unsaved work"
     );
+
+    isConfirmationDialogActive = false;
+
     if (answer === "No! Go back now!") {
-      onRestore(tempState, extensionUri); // Restore the latest saved state
+      onRestore(tempState, extensionUri);
     } else {
       tempState = null;
     }
@@ -130,7 +137,6 @@ function getDesmosHtml(apiOrUri) {
 function openDesmosOffline(restoredState, extensionUri) {
   const desmosUri = vscode.Uri.joinPath(extensionUri, 'desmos.js');
 
-  // Create the panel first to access `panel.webview.asWebviewUri`
   panel = vscode.window.createWebviewPanel(
     "desmosCalcView",
     "Desmos Calculator",
@@ -138,7 +144,7 @@ function openDesmosOffline(restoredState, extensionUri) {
     { enableScripts: true, retainContextWhenHidden: true }
   );
 
-  const webviewUri = panel.webview.asWebviewUri(desmosUri); // Convert to webview-compatible URI
+  const webviewUri = panel.webview.asWebviewUri(desmosUri);
   const htmlContent = getDesmosHtml(webviewUri.toString());
 
   panel.webview.html = htmlContent;
@@ -151,17 +157,23 @@ function openDesmosOffline(restoredState, extensionUri) {
         vscode.window.showInformationMessage("Work exported");
       }
     } else if (message.command === "tempState") {
-      tempState = message.data; // Always keep the latest state
+      tempState = message.data;
     }
   });
 
   panel.onDidDispose(async () => {
+    if (isConfirmationDialogActive) return;
+    isConfirmationDialogActive = true;
+
     const answer = await vscode.window.showWarningMessage(
       "Are you sure you wanted to close Desmos?",
       "No! Go back now!", "Yes & discard any unsaved work"
     );
+
+    isConfirmationDialogActive = false;
+
     if (answer === "No! Go back now!") {
-      openDesmosOffline(tempState, extensionUri); // Restore the latest saved state
+      openDesmosOffline(tempState, extensionUri);
     } else {
       tempState = null;
     }
