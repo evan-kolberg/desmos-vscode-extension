@@ -5,6 +5,7 @@ let panel = null;
 let tempState = null;
 let jsonTemp = null;
 let tempImport = null;
+let justImported = false;
 let isDialogActive = false;
 
 function getHtml(scriptUri) {
@@ -39,7 +40,7 @@ function getHtml(scriptUri) {
 </html>`;
 }
 
-function openDesmos({ viewType, title, script, restoredState, extensionUri, onRestore }) {
+function openDesmos({ viewType, title, script, restoredState, extensionUri, onRestore, onUnsaved }) {
 	panel = vscode.window.createWebviewPanel(
 		viewType, title, vscode.ViewColumn.One,
 		{ enableScripts: true, retainContextWhenHidden: true }
@@ -61,30 +62,32 @@ function openDesmos({ viewType, title, script, restoredState, extensionUri, onRe
 			}
 		} 
 		else if (msg.command === "tempState") {
+			if (justImported && JSON.stringify(msg.data) !== JSON.stringify(tempImport)) {
+				justImported = false;
+			}
 			tempState = msg.data;
 		}
 	});
 
 	panel.onDidDispose(async () => {
-		if (tempState
-			&& JSON.stringify(tempState) !== JSON.stringify(jsonTemp)
-			&& JSON.stringify(tempState) !== JSON.stringify(tempImport)
-		) {
-			if (isDialogActive) return;
-			isDialogActive = true;
-			const choice = await vscode.window.showWarningMessage(
-				"Unsaved work detected. Recover?", 
-				"Recover", 
-				"Discard unsaved work"
-			);
-			isDialogActive = false;
-			if (choice === "Recover") {
-				onRestore(tempState, extensionUri);
-			}
+		panel = null;
+		
+		if (justImported) {
+			tempState = jsonTemp = tempImport = null;
+			justImported = false;
+			return;
 		}
-		tempState = null;
-		jsonTemp = null;
-		tempImport = null;
+
+		if (
+			tempState &&
+			JSON.stringify(tempState) !== JSON.stringify(jsonTemp) &&
+			JSON.stringify(tempState) !== JSON.stringify(tempImport)
+		) {
+			onUnsaved?.(tempState);
+		}
+
+		tempState = jsonTemp = tempImport = null;
+		justImported = false;
 	});
 
 	if (restoredState) {
@@ -97,7 +100,9 @@ function getPanel() {
 }
 
 function setTempImport(data) {
-	tempImport = data;
+  tempImport   = data;
+  tempState    = data;
+  justImported = true;
 }
 
 module.exports = { openDesmos, getPanel, setTempImport };
