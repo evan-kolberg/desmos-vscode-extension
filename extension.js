@@ -71,7 +71,7 @@ function createDesmosPanel(title, viewType, htmlContent, restoredState, extensio
     if (isConfirmationDialogActive) return;
     isConfirmationDialogActive = true;
 
-    const answer = await vscode.window.showInformationMessage(
+    const answer = await vscode.window.showWarningMessage(
       "Are you sure you wanted to close Desmos?",
       "No! Go back now!", "Yes & discard any unsaved work"
     );
@@ -165,7 +165,7 @@ function openDesmosOffline(restoredState, extensionUri) {
     if (isConfirmationDialogActive) return;
     isConfirmationDialogActive = true;
 
-    const answer = await vscode.window.showInformationMessage(
+    const answer = await vscode.window.showWarningMessage(
       "Are you sure you wanted to close Desmos?",
       "No! Go back now!", "Yes & discard any unsaved work"
     );
