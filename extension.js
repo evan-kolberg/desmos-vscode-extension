@@ -52,6 +52,12 @@ class DesmosDataProvider {
         tooltip: "Import work into the calculator",
         icon: new vscode.ThemeIcon("cloud-upload")
       },
+      {
+        label: "Clear Unsaved Work",
+        command: { command: "extension.clearUnsavedWork" },
+        tooltip: "Clear all unsaved recovery items",
+        icon: new vscode.ThemeIcon("trash")
+      },
       ...unsavedWork.map(item => ({
         label: `Unsaved: ${item}`,
         command: { command: "extension.recoverWork", arguments: [item] },
@@ -110,7 +116,7 @@ function openDesmosOnline(restoredState, extensionUri, dataProvider) {
 function activate(context) {
   const dataProvider = new DesmosDataProvider(context);
   vscode.window.registerTreeDataProvider("desmosCalcView", dataProvider);
-  dataProvider.refresh();  // initial population
+  dataProvider.refresh();
 
   context.subscriptions.push(
     vscode.commands.registerCommand("extension.openDesmosOffline", () => {
@@ -128,12 +134,11 @@ function activate(context) {
       dataProvider.refresh();
     }),
     vscode.commands.registerCommand("extension.importJson", async () => {
-      let panel = getPanel();
+      const panel = getPanel();
       if (!panel) {
-        openDesmosOffline(null, context.extensionUri, dataProvider);
-        panel = getPanel();
+        vscode.window.showErrorMessage("No active panel to import into");
+        return;
       }
-      if (!panel) return;
       const files = await vscode.window.showOpenDialog({ canSelectMany: false, filters: { JSON: ["json"] } });
       if (files && files.length > 0) {
         const fileContent = fs.readFileSync(files[0].fsPath, "utf8");
@@ -144,9 +149,9 @@ function activate(context) {
           vscode.window.showErrorMessage("Invalid JSON file");
           return;
         }
+        setTempImport(panel, jsonData);
         panel.webview.postMessage({ command: "import", data: jsonData });
-        setTempImport(jsonData);
-        vscode.window.showInformationMessage("Work imported");
+        vscode.window.showInformationMessage("Work imported into the active panel");
       }
     }),
     vscode.commands.registerCommand("extension.recoverWork", (item) => {
@@ -156,6 +161,11 @@ function activate(context) {
       const existing = ws.get('unsavedWork', []);
       ws.update('unsavedWork', existing.filter(x => x !== item));
       dataProvider.refresh();
+    }),
+    vscode.commands.registerCommand("extension.clearUnsavedWork", () => {
+      context.workspaceState.update('unsavedWork', []);
+      dataProvider.refresh();
+      vscode.window.showInformationMessage("All unsaved recovery items cleared");
     })
   );
 }

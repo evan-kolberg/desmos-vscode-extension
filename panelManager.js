@@ -1,12 +1,7 @@
 const vscode = require('vscode');
 const fs = require('fs');
 
-let panel = null;
-let tempState = null;
-let jsonTemp = null;
-let tempImport = null;
-let justImported = false;
-let isDialogActive = false;
+const panels = new Map();
 
 function getHtml(scriptUri) {
 	return `
@@ -41,7 +36,7 @@ function getHtml(scriptUri) {
 }
 
 function openDesmos({ viewType, title, script, restoredState, extensionUri, onRestore, onUnsaved }) {
-	panel = vscode.window.createWebviewPanel(
+	const panel = vscode.window.createWebviewPanel(
 		viewType, title, vscode.ViewColumn.One,
 		{ enableScripts: true, retainContextWhenHidden: true }
 	);
@@ -52,42 +47,40 @@ function openDesmos({ viewType, title, script, restoredState, extensionUri, onRe
 
 	panel.webview.html = getHtml(scriptUri);
 
+	const panelState = {
+		tempState: null,
+		jsonTemp: null,
+		tempImport: null,
+		justImported: false
+	};
+	panels.set(panel, panelState);
+
 	panel.webview.onDidReceiveMessage(async msg => {
 		if (msg.command === "calcState") {
 			const saveUri = await vscode.window.showSaveDialog({ filters:{ JSON:["json"] } });
 			if (saveUri) {
 				fs.writeFileSync(saveUri.fsPath, JSON.stringify(msg.data,null,2));
 				vscode.window.showInformationMessage("Work exported");
-				jsonTemp = msg.data;
+				panelState.jsonTemp = msg.data;
 			}
 		} 
 		else if (msg.command === "tempState") {
-			if (justImported && JSON.stringify(msg.data) !== JSON.stringify(tempImport)) {
-				justImported = false;
+			if (panelState.justImported && JSON.stringify(msg.data) !== JSON.stringify(panelState.tempImport)) {
+				panelState.justImported = false;
 			}
-			tempState = msg.data;
+			panelState.tempState = msg.data;
 		}
 	});
 
-	panel.onDidDispose(async () => {
-		panel = null;
-		
-		if (justImported) {
-			tempState = jsonTemp = tempImport = null;
-			justImported = false;
-			return;
-		}
-
+	panel.onDidDispose(() => {
 		if (
-			tempState &&
-			JSON.stringify(tempState) !== JSON.stringify(jsonTemp) &&
-			JSON.stringify(tempState) !== JSON.stringify(tempImport)
+			panelState.tempState &&
+			JSON.stringify(panelState.tempState) !== JSON.stringify(panelState.jsonTemp) &&
+			JSON.stringify(panelState.tempState) !== JSON.stringify(panelState.tempImport)
 		) {
-			onUnsaved?.(tempState);
+			onUnsaved?.(panelState.tempState);
 		}
-
-		tempState = jsonTemp = tempImport = null;
-		justImported = false;
+		panels.delete(panel);
 	});
 
 	if (restoredState) {
@@ -96,13 +89,21 @@ function openDesmos({ viewType, title, script, restoredState, extensionUri, onRe
 }
 
 function getPanel() {
-	return panel;
+  for (const [panel] of panels) {
+    if (panel.visible) {
+      return panel;
+    }
+  }
+  return null;
 }
 
-function setTempImport(data) {
-  tempImport   = data;
-  tempState    = data;
-  justImported = true;
+function setTempImport(panel, data) {
+  const panelState = panels.get(panel);
+  if (panelState) {
+    panelState.tempImport = data;
+    panelState.tempState = data;
+    panelState.justImported = true;
+  }
 }
 
 module.exports = { openDesmos, getPanel, setTempImport };

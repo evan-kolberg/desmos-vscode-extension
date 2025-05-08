@@ -41,6 +41,10 @@
       {
         "command": "extension.importJson",
         "title": "Desmos: Import Work (.json)"
+      },
+      {
+        "command": "extension.clearUnsavedWork",
+        "title": "Desmos: Clear All Unsaved Recovery Items"
       }
     ]
   },
