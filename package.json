@@ -20,22 +20,27 @@
       "desmosViewContainer": [
         {
           "id": "desmosCalcView",
-          "name": "Desmos Calculator"
+          "name": "Desmos Calculator",
+          "icon": "./desmos.png"
         }
       ]
     },
     "commands": [
       {
-        "command": "extension.openDesmos",
-        "title": "Open Desmos Calculator"
+        "command": "extension.openDesmosOffline",
+        "title": "Desmos: Open Desmos Offline (v1.10.1)"
+      },
+      {
+        "command": "extension.openDesmosOnline",
+        "title": "Desmos: Open via API (v1.10.1)"
       },
       {
         "command": "extension.exportJson",
-        "title": "Export JSON"
+        "title": "Desmos: Export JSON"
       },
       {
         "command": "extension.importJson",
-        "title": "Import JSON"
+        "title": "Desmos: Import JSON"
       }
     ]
   },
