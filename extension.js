@@ -6,25 +6,55 @@ let panel;
 let tempState = null;
 
 class DesmosDataProvider {
-  getTreeItem(element) { return element; }
+  getTreeItem(element) {
+    const treeItem = new vscode.TreeItem(element.label, vscode.TreeItemCollapsibleState.None);
+    treeItem.command = element.command;
+    treeItem.tooltip = element.tooltip;
+    treeItem.iconPath = element.icon;
+    return treeItem;
+  }
+
   getChildren() {
     return [
-      { label: "Open Desmos", command: { command: "extension.openDesmos" } },
-      { label: "Export JSON", command: { command: "extension.exportJson" } },
-      { label: "Import JSON", command: { command: "extension.importJson" } }
+      {
+        label: "Open Desmos",
+        command: { command: "extension.openDesmos", title: "Open Desmos" },
+        tooltip: "Open the Desmos Calculator",
+        icon: new vscode.ThemeIcon("add")
+      },
+      {
+        label: "Export JSON",
+        command: { command: "extension.exportJson", title: "Export JSON" },
+        tooltip: "Export the current state as JSON",
+        icon: new vscode.ThemeIcon("file-code")
+      },
+      {
+        label: "Import JSON",
+        command: { command: "extension.importJson", title: "Import JSON" },
+        tooltip: "Import a JSON file into the calculator",
+        icon: new vscode.ThemeIcon("cloud-upload")
+      }
     ];
   }
 }
 
-function openDesmos(restoredState) {
+function openDesmos(restoredState, extensionUri) {
   panel = vscode.window.createWebviewPanel(
     "desmosCalcView",
     "Desmos Calculator",
     vscode.ViewColumn.One,
     { enableScripts: true, retainContextWhenHidden: true }
   );
-  const webviewUri = vscode.Uri.file(path.join(__dirname, "webview.html"));
-  panel.webview.html = fs.readFileSync(webviewUri.fsPath, "utf8");
+
+  const desmosUri = panel.webview.asWebviewUri(
+    vscode.Uri.joinPath(extensionUri, 'desmos.js')
+  );
+
+  const htmlPath = vscode.Uri.joinPath(extensionUri, 'webview.html');
+  let html = fs.readFileSync(htmlPath.fsPath, 'utf8');
+  html = html.replace('DESMOS_LOCAL_URI', desmosUri);
+
+  panel.webview.html = html;
 
   panel.webview.onDidReceiveMessage(async (message) => {
     if (message.command === "calcState") {
@@ -41,17 +71,16 @@ function openDesmos(restoredState) {
 
   panel.onDidDispose(async () => {
     const answer = await vscode.window.showWarningMessage(
-      "Are you sure you want to close this panel?",
-      "Yes","No"
+      "Are you sure you wanted to close this panel?",
+      "NO! Go back now!","Yes, discard unsaved work"
     );
-    if (answer === "No") {
-      openDesmos(tempState);
+    if (answer === "NO! Go back now!") {
+      openDesmos(tempState, extensionUri);
     } else {
       tempState = null;
     }
   });
 
-  // After panel loads, restore if provided
   if (restoredState) {
     panel.webview.postMessage({ command: "import", data: restoredState });
   }
@@ -61,7 +90,7 @@ function activate(context) {
   vscode.window.registerTreeDataProvider("desmosCalcView", new DesmosDataProvider());
 
   let disposableOpen = vscode.commands.registerCommand("extension.openDesmos", () => {
-    openDesmos(null);
+    openDesmos(null, context.extensionUri);
   });
 
   let disposableExport = vscode.commands.registerCommand("extension.exportJson", () => {

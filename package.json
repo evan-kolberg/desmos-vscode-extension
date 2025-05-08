@@ -1,14 +1,10 @@
 {
-  "name": "desmos-extension",
-  "displayName": "Desmos Extension",
+  "name": "desmos-calculator",
+  "displayName": "Desmos",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.70.0"
   },
-  "activationEvents": [
-    "onView:desmosCalcView",
-    "onCommand:extension.openDesmos"
-  ],
   "main": "./extension.js",
   "contributes": {
     "viewsContainers": {
