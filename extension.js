@@ -53,7 +53,7 @@ class DesmosDataProvider {
         icon: new vscode.ThemeIcon("cloud-upload")
       },
       {
-        label: "Clear Unsaved Work",
+        label: "Clear Recovery Items",
         command: { command: "extension.clearUnsavedWork" },
         tooltip: "Clear all unsaved recovery items",
         icon: new vscode.ThemeIcon("trash")

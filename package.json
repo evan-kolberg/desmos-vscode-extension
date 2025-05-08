@@ -6,6 +6,19 @@
     "vscode": "^1.70.0"
   },
   "main": "./extension.js",
+  "icon": "./desmos.png",
+  "activationEvents": [
+    "onCommand:extension.openDesmosOffline",
+    "onCommand:extension.openDesmosOnline",
+    "onCommand:extension.exportJson",
+    "onCommand:extension.importJson",
+    "onCommand:extension.clearUnsavedWork",
+    "onCommand:extension.recoverWork"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/evan-kolberg/desmos-vscode-extension"
+  },
   "contributes": {
     "viewsContainers": {
       "activitybar": [
@@ -44,11 +57,12 @@
       },
       {
         "command": "extension.clearUnsavedWork",
-        "title": "Desmos: Clear All Unsaved Recovery Items"
+        "title": "Desmos: Clear Recovery Items"
       }
     ]
   },
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
     "vscode": "^1.1.34"
   }
 }
