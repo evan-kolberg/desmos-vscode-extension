@@ -24,7 +24,7 @@
         {
           "id": "desmosViewContainer",
           "title": "Desmos",
-          "icon": "./desmos.png"
+          "icon": "./desmos-activity-bar.png"
         }
       ]
     },
@@ -33,7 +33,7 @@
         {
           "id": "desmosCalcView",
           "name": "Desmos Graphing Calculator",
-          "icon": "./desmos.png"
+          "icon": "./desmos-activity-bar.png"
         }
       ]
     },
