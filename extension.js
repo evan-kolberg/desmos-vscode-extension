@@ -18,25 +18,25 @@ class DesmosDataProvider {
     return [
       {
         label: "Open Desmos Offline (v1.10.1)",
-        command: { command: "extension.openDesmosOffline", title: "Open Desmos from Offline" },
-        tooltip: "Open an offline & local version of Desmos",
+        command: { command: "extension.openDesmosOffline" },
+        tooltip: "Open an offline, local version of Desmos",
         icon: new vscode.ThemeIcon("add")
       },
       {
-        label: "Open via API (v1.10.1)",
-        command: { command: "extension.openDesmosOnline", title: "Open Desmos from Online" },
+        label: "Open Desmos via API (v1.10.1)",
+        command: { command: "extension.openDesmosOnline" },
         tooltip: "Request Desmos via the API",
         icon: new vscode.ThemeIcon("globe")
       },
       {
         label: "Export Work (.json)",
-        command: { command: "extension.exportJson", title: "Export JSON" },
+        command: { command: "extension.exportJson" },
         tooltip: "Export all current work in the calculator",
         icon: new vscode.ThemeIcon("file-code")
       },
       {
         label: "Import Work (.json)",
-        command: { command: "extension.importJson", title: "Import JSON" },
+        command: { command: "extension.importJson" },
         tooltip: "Import work into the calculator",
         icon: new vscode.ThemeIcon("cloud-upload")
       },
@@ -44,19 +44,47 @@ class DesmosDataProvider {
   }
 }
 
-function openDesmosOffline(restoredState, extensionUri) {
+function createDesmosPanel(title, viewType, htmlContent, restoredState, extensionUri, onRestore) {
   panel = vscode.window.createWebviewPanel(
-    "desmosCalcView",
-    "Desmos Calculator",
+    viewType,
+    title,
     vscode.ViewColumn.One,
     { enableScripts: true, retainContextWhenHidden: true }
   );
 
-  const desmosUri = panel.webview.asWebviewUri(
-    vscode.Uri.joinPath(extensionUri, 'desmos.js')
-  );
+  panel.webview.html = htmlContent;
 
-  const html = `
+  panel.webview.onDidReceiveMessage(async (message) => {
+    if (message.command === "calcState") {
+      const saveUri = await vscode.window.showSaveDialog({ filters: { JSON: ["json"] } });
+      if (saveUri) {
+        fs.writeFileSync(saveUri.fsPath, JSON.stringify(message.data, null, 2));
+        vscode.window.showInformationMessage("Work exported");
+      }
+    } else if (message.command === "tempState") {
+      tempState = message.data; // Always keep the latest state
+    }
+  });
+
+  panel.onDidDispose(async () => {
+    const answer = await vscode.window.showWarningMessage(
+      "Are you sure you wanted to close Desmos?",
+      "No! Go back now!", "Yes & discard any unsaved work"
+    );
+    if (answer === "No! Go back now!") {
+      onRestore(tempState, extensionUri); // Restore the latest saved state
+    } else {
+      tempState = null;
+    }
+  });
+
+  if (restoredState) {
+    panel.webview.postMessage({ command: "import", data: restoredState });
+  }
+}
+
+function getDesmosHtml(apiOrUri) {
+  return `
   <!DOCTYPE html>
   <html>
   <head>
@@ -77,12 +105,13 @@ function openDesmosOffline(restoredState, extensionUri) {
   </head>
   <body>
     <div id="calculator"></div>
-    <script src="${desmosUri}"></script>
+    <script src="${apiOrUri}"></script>
     <script>
       const vscode = acquireVsCodeApi();
       const Calc = Desmos.GraphingCalculator(document.getElementById('calculator'));
       Calc.observeEvent('change', () => {
-        vscode.postMessage({ command: "tempState", data: Calc.getState() });
+        const state = Calc.getState();
+        vscode.postMessage({ command: "tempState", data: state });
       });
       window.addEventListener("message", (event) => {
         if (event.data.command === "export") {
@@ -96,28 +125,43 @@ function openDesmosOffline(restoredState, extensionUri) {
   </body>
   </html>
   `;
+}
 
-  panel.webview.html = html;
+function openDesmosOffline(restoredState, extensionUri) {
+  const desmosUri = vscode.Uri.joinPath(extensionUri, 'desmos.js');
+
+  // Create the panel first to access `panel.webview.asWebviewUri`
+  panel = vscode.window.createWebviewPanel(
+    "desmosCalcView",
+    "Desmos Calculator",
+    vscode.ViewColumn.One,
+    { enableScripts: true, retainContextWhenHidden: true }
+  );
+
+  const webviewUri = panel.webview.asWebviewUri(desmosUri); // Convert to webview-compatible URI
+  const htmlContent = getDesmosHtml(webviewUri.toString());
+
+  panel.webview.html = htmlContent;
 
   panel.webview.onDidReceiveMessage(async (message) => {
     if (message.command === "calcState") {
       const saveUri = await vscode.window.showSaveDialog({ filters: { JSON: ["json"] } });
       if (saveUri) {
         fs.writeFileSync(saveUri.fsPath, JSON.stringify(message.data, null, 2));
-        vscode.window.showInformationMessage("State exported");
+        vscode.window.showInformationMessage("Work exported");
       }
     } else if (message.command === "tempState") {
-      tempState = message.data;
+      tempState = message.data; // Always keep the latest state
     }
   });
 
   panel.onDidDispose(async () => {
     const answer = await vscode.window.showWarningMessage(
-      "Are you sure you wanted to close this panel?",
-      "NO! Go back now!", "Yes, discard unsaved work"
+      "Are you sure you wanted to close Desmos?",
+      "No! Go back now!", "Yes & discard any unsaved work"
     );
-    if (answer === "NO! Go back now!") {
-      openDesmosOffline(tempState, extensionUri);
+    if (answer === "No! Go back now!") {
+      openDesmosOffline(tempState, extensionUri); // Restore the latest saved state
     } else {
       tempState = null;
     }
@@ -129,85 +173,16 @@ function openDesmosOffline(restoredState, extensionUri) {
 }
 
 function openDesmosOnline(restoredState, extensionUri) {
-  panel = vscode.window.createWebviewPanel(
-    "desmosOnlineCalcView",
-    "Desmos Calculator Online",
-    vscode.ViewColumn.One,
-    { enableScripts: true, retainContextWhenHidden: true }
-  );
-
   const onlineScriptAPI = "https://www.desmos.com/api/v1.10/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6";
-
-  const html = `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="UTF-8"/>
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-      }
-      #calculator {
-        width: 100%;
-        height: 100%;
-        box-sizing: border-box;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="calculator"></div>
-    <script src="${onlineScriptAPI}"></script>
-    <script>
-      const vscode = acquireVsCodeApi();
-      const Calc = Desmos.GraphingCalculator(document.getElementById('calculator'));
-      Calc.observeEvent('change', () => {
-        vscode.postMessage({ command: "tempState", data: Calc.getState() });
-      });
-      window.addEventListener("message", (event) => {
-        if (event.data.command === "export") {
-          const state = Calc.getState();
-          vscode.postMessage({ command: "calcState", data: state });
-        } else if (event.data.command === "import") {
-          Calc.setState(event.data.data);
-        }
-      });
-    </script>
-  </body>
-  </html>
-  `;
-
-  panel.webview.html = html;
-
-  panel.webview.onDidReceiveMessage(async (message) => {
-    if (message.command === "calcState") {
-      const saveUri = await vscode.window.showSaveDialog({ filters: { JSON: ["json"] } });
-      if (saveUri) {
-        fs.writeFileSync(saveUri.fsPath, JSON.stringify(message.data, null, 2));
-        vscode.window.showInformationMessage("State exported");
-      }
-    } else if (message.command === "tempState") {
-      tempState = message.data;
-    }
-  });
-
-  panel.onDidDispose(async () => {
-    const answer = await vscode.window.showWarningMessage(
-      "Are you sure you wanted to close this panel?",
-      "NO! Go back now!", "Yes, discard unsaved work"
-    );
-    if (answer === "NO! Go back now!") {
-      openDesmosOnline(tempState, extensionUri);
-    } else {
-      tempState = null;
-    }
-  });
-
-  if (restoredState) {
-    panel.webview.postMessage({ command: "import", data: restoredState });
-  }
+  const htmlContent = getDesmosHtml(onlineScriptAPI);
+  createDesmosPanel(
+    "Desmos Calculator Online",
+    "desmosOnlineCalcView",
+    htmlContent,
+    restoredState,
+    extensionUri,
+    openDesmosOnline
+  );
 }
 
 function activate(context) {
@@ -236,7 +211,7 @@ function activate(context) {
         return;
       }
       panel.webview.postMessage({ command: "import", data: jsonData });
-      vscode.window.showInformationMessage("State imported");
+      vscode.window.showInformationMessage("Work imported");
     }
   });
 

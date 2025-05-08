@@ -32,15 +32,15 @@
       },
       {
         "command": "extension.openDesmosOnline",
-        "title": "Desmos: Open via API (v1.10.1)"
+        "title": "Desmos: Open Desmos via API (v1.10.1)"
       },
       {
         "command": "extension.exportJson",
-        "title": "Desmos: Export JSON"
+        "title": "Desmos: Export Work (.json)"
       },
       {
         "command": "extension.importJson",
-        "title": "Desmos: Import JSON"
+        "title": "Desmos: Import Work (.json)"
       }
     ]
   },
