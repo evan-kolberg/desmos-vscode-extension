@@ -1,6 +1,6 @@
 const vscode = require('vscode');
 const fs = require('fs');
-const { openDesmos, getPanel } = require('./panelManager');
+const { openDesmos, getPanel, setTempImport } = require('./panelManager');
 
 class DesmosDataProvider {
   getTreeItem(element) {
@@ -82,7 +82,11 @@ function activate(context) {
       }
     }),
     vscode.commands.registerCommand("extension.importJson", async () => {
-      const panel = getPanel();
+      let panel = getPanel();
+      if (!panel) {
+        openDesmosOffline(null, context.extensionUri);
+        panel = getPanel();
+      }
       if (!panel) return;
       const files = await vscode.window.showOpenDialog({ canSelectMany: false, filters: { JSON: ["json"] } });
       if (files && files.length > 0) {
@@ -95,6 +99,7 @@ function activate(context) {
           return;
         }
         panel.webview.postMessage({ command: "import", data: jsonData });
+        setTempImport(jsonData);
         vscode.window.showInformationMessage("Work imported");
       }
     })

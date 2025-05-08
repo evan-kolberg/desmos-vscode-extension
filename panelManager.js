@@ -3,6 +3,8 @@ const fs = require('fs');
 
 let panel = null;
 let tempState = null;
+let jsonTemp = null;
+let tempImport = null;
 let isDialogActive = false;
 
 function getHtml(scriptUri) {
@@ -55,6 +57,7 @@ function openDesmos({ viewType, title, script, restoredState, extensionUri, onRe
 			if (saveUri) {
 				fs.writeFileSync(saveUri.fsPath, JSON.stringify(msg.data,null,2));
 				vscode.window.showInformationMessage("Work exported");
+				jsonTemp = msg.data;
 			}
 		} 
 		else if (msg.command === "tempState") {
@@ -63,19 +66,25 @@ function openDesmos({ viewType, title, script, restoredState, extensionUri, onRe
 	});
 
 	panel.onDidDispose(async () => {
-		if (isDialogActive) return;
-		isDialogActive = true;
-		const choice = await vscode.window.showWarningMessage(
-			"Are you sure you wanted to close Desmos?",
-			"No! Go back now!","Yes, discard any unsaved work"
-		);
-		isDialogActive = false;
-
-		if (choice === "No! Go back now!") {
-			onRestore(tempState, extensionUri);
-		} else {
-			tempState = null;
+		if (tempState
+			&& JSON.stringify(tempState) !== JSON.stringify(jsonTemp)
+			&& JSON.stringify(tempState) !== JSON.stringify(tempImport)
+		) {
+			if (isDialogActive) return;
+			isDialogActive = true;
+			const choice = await vscode.window.showWarningMessage(
+				"Unsaved work detected. Recover?", 
+				"Recover", 
+				"Discard unsaved work"
+			);
+			isDialogActive = false;
+			if (choice === "Recover") {
+				onRestore(tempState, extensionUri);
+			}
 		}
+		tempState = null;
+		jsonTemp = null;
+		tempImport = null;
 	});
 
 	if (restoredState) {
@@ -87,4 +96,8 @@ function getPanel() {
 	return panel;
 }
 
-module.exports = { openDesmos, getPanel };
+function setTempImport(data) {
+	tempImport = data;
+}
+
+module.exports = { openDesmos, getPanel, setTempImport };
