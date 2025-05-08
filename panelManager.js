@@ -60,7 +60,7 @@ function openDesmos({ viewType, title, script, restoredState, extensionUri, onRe
 			const saveUri = await vscode.window.showSaveDialog({ filters:{ JSON:["json"] } });
 			if (saveUri) {
 				fs.writeFileSync(saveUri.fsPath, JSON.stringify(msg.data,null,2));
-				vscode.window.showInformationMessage("Work exported");
+				vscode.window.showInformationMessage("Data exported");
 				panelState.jsonTemp = msg.data;
 			}
 		} 

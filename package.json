@@ -1,19 +1,18 @@
 {
-  "name": "desmos-calculator",
-  "displayName": "Desmos",
+  "name": "desmos-graphing-calculator",
+  "displayName": "Desmos Graphing Calculator",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.70.0"
   },
   "main": "./extension.js",
-  "icon": "./desmos.png",
+  "icon": "./desmos-icon.png",
   "activationEvents": [
-    "onCommand:extension.openDesmosOffline",
-    "onCommand:extension.openDesmosOnline",
+    "onCommand:extension.openDesmos",
     "onCommand:extension.exportJson",
     "onCommand:extension.importJson",
-    "onCommand:extension.clearUnsavedWork",
-    "onCommand:extension.recoverWork"
+    "onCommand:extension.clearUnsavedData",
+    "onCommand:extension.recoverData"
   ],
   "repository": {
     "type": "git",
@@ -33,30 +32,26 @@
       "desmosViewContainer": [
         {
           "id": "desmosCalcView",
-          "name": "Desmos Calculator",
+          "name": "Desmos Graphing Calculator",
           "icon": "./desmos.png"
         }
       ]
     },
     "commands": [
       {
-        "command": "extension.openDesmosOffline",
-        "title": "Desmos: Open Desmos Offline (v1.10.1)"
-      },
-      {
-        "command": "extension.openDesmosOnline",
-        "title": "Desmos: Open Desmos via API (v1.10.1)"
+        "command": "extension.openDesmos",
+        "title": "Desmos: Open Desmos (v1.10.1)"
       },
       {
         "command": "extension.exportJson",
-        "title": "Desmos: Export Work (.json)"
+        "title": "Desmos: Export Data"
       },
       {
         "command": "extension.importJson",
-        "title": "Desmos: Import Work (.json)"
+        "title": "Desmos: Import Data"
       },
       {
-        "command": "extension.clearUnsavedWork",
+        "command": "extension.clearUnsavedData",
         "title": "Desmos: Clear Recovery Items"
       }
     ]
