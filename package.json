@@ -1,7 +1,7 @@
 {
   "name": "desmos-graphing-calculator",
   "displayName": "Desmos Graphing Calculator",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "evan-kolberg",
   "engines": {
     "vscode": "^1.70.0"

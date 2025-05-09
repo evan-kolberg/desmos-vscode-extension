@@ -26,7 +26,6 @@ class DesmosDataProvider {
 
   getChildren() {
     const unsavedData = this.context.workspaceState.get('unsavedData', []);
-    const recentFiles = this.context.workspaceState.get('recentFiles', []);
     return [
       {
         label: "Open Desmos (v1.10.1)",
@@ -69,8 +68,6 @@ function openDesmosLocal(restoredState, extensionUri, dataProvider) {
     title: 'Desmos Calculator',
     script: desmosUri,
     restoredState,
-    extensionUri,
-    onRestore: (state, uri) => openDesmosLocal(state, uri, dataProvider),
     onUnsaved: (discardedState) => {
       const ws = dataProvider.context.workspaceState;
       const state = JSON.stringify(discardedState);
@@ -97,9 +94,7 @@ function activate(context) {
         vscode.window.showErrorMessage("No active panel available");
         return;
       }
-      if (panel) {
-        panel.webview.postMessage({ command: "export" });
-      }
+      panel.webview.postMessage({ command: "export" });
       dataProvider.refresh();
     }),
     vscode.commands.registerCommand("extension.importJson", async () => {
@@ -107,10 +102,6 @@ function activate(context) {
       if (!panel) {
         openDesmosLocal(null, context.extensionUri, dataProvider);
         panel = getPanel();
-      }
-      if (!panel) {
-        vscode.window.showErrorMessage("Failed to open a new panel for importing");
-        return;
       }
       const files = await vscode.window.showOpenDialog({ canSelectMany: false, filters: { JSON: ["json"] } });
       if (files && files.length > 0) {
