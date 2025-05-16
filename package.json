@@ -1,18 +1,14 @@
 {
   "name": "desmos-graphing-calculator",
   "displayName": "Desmos Graphing Calculator",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "evan-kolberg",
   "engines": {
-    "vscode": "^1.70.0"
+    "vscode": "^1.80.0"
   },
   "main": "./extension.js",
   "icon": "./desmos-icon.png",
   "activationEvents": [
-    "onCommand:extension.openDesmos",
-    "onCommand:extension.exportJson",
-    "onCommand:extension.importJson",
-    "onCommand:extension.clearUnsavedData",
     "onCommand:extension.recoverData"
   ],
   "repository": {
