@@ -30,7 +30,13 @@ class DesmosDataProvider {
       {
         label: "Open Desmos (v1.10.1)",
         command: { command: "extension.openDesmos" },
-        tooltip: "Open an offline, local version of Desmos",
+        tooltip: "Open a stable, offline, & local version of Desmos",
+        icon: new vscode.ThemeIcon("add")
+      },
+      {
+        label: "Open Desmos (v1.11-prerelease)",
+        command: { command: "extension.openDesmosPrerelease" },
+        tooltip: "Open the latest, offline, & local version of Desmos",
         icon: new vscode.ThemeIcon("add")
       },
       {
@@ -62,15 +68,35 @@ class DesmosDataProvider {
 }
 
 function openDesmosLocal(restoredState, extensionUri, dataProvider) {
-  const desmosUri = vscode.Uri.joinPath(extensionUri, 'desmos.js');
+  const desmosUri = vscode.Uri.joinPath(extensionUri, 'desmos_1.10.1.js');
   openDesmos({
     viewType: 'desmosCalcView',
-    title: 'Desmos Calculator',
     script: desmosUri,
+    title: '1.10.1 (Stable)',
     restoredState,
     onUnsaved: (discardedState) => {
       const ws = dataProvider.context.workspaceState;
-      const state = JSON.stringify(discardedState);
+      const timestamp = new Date().toISOString();
+      const state = JSON.stringify({ version: 'stable', data: discardedState, timestamp });
+      const unsavedData = ws.get('unsavedData', []);
+      unsavedData.push(state);
+      ws.update('unsavedData', unsavedData);
+      dataProvider.refresh();
+    }
+  });
+}
+
+function openDesmosLocalPrerelease(restoredState, extensionUri, dataProvider) {
+  const desmosUri = vscode.Uri.joinPath(extensionUri, 'desmos_1.11-prerelease.js');
+  openDesmos({
+    viewType: 'desmosCalcView',
+    script: desmosUri,
+    title: '1.11-prerelease (Latest)',
+    restoredState,
+    onUnsaved: (discardedState) => {
+      const ws = dataProvider.context.workspaceState;
+      const timestamp = new Date().toISOString();
+      const state = JSON.stringify({ version: 'prerelease', data: discardedState, timestamp });
       const unsavedData = ws.get('unsavedData', []);
       unsavedData.push(state);
       ws.update('unsavedData', unsavedData);
@@ -87,6 +113,9 @@ function activate(context) {
   context.subscriptions.push(
     vscode.commands.registerCommand("extension.openDesmos", () => {
       openDesmosLocal(null, context.extensionUri, dataProvider);
+    }),
+    vscode.commands.registerCommand("extension.openDesmosPrerelease", () => {
+      openDesmosLocalPrerelease(null, context.extensionUri, dataProvider);
     }),
     vscode.commands.registerCommand("extension.exportJson", () => {
       const panel = getPanel();
@@ -119,12 +148,18 @@ function activate(context) {
       }
     }),
     vscode.commands.registerCommand("extension.recoverData", (item) => {
-      const state = JSON.parse(item);
-      openDesmosLocal(state, context.extensionUri, dataProvider);
+      const parsedItem = JSON.parse(item);
+      const { version, data, timestamp } = parsedItem;
+      if (version === 'stable') {
+        openDesmosLocal(data, context.extensionUri, dataProvider);
+      } else if (version === 'prerelease') {
+        openDesmosLocalPrerelease(data, context.extensionUri, dataProvider);
+      }
       const ws = context.workspaceState;
       const existing = ws.get('unsavedData', []);
       ws.update('unsavedData', existing.filter(x => x !== item));
       dataProvider.refresh();
+      vscode.window.showInformationMessage(`Recovered data from ${timestamp}`);
     }),
     vscode.commands.registerCommand("extension.clearUnsavedData", () => {
       context.workspaceState.update('unsavedData', []);

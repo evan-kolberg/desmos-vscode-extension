@@ -4,6 +4,7 @@
 - Offline & local
 - Recover unsaved work
 - Import / Export data
+- Stable & Prerelease versions
 
 You can use the calculator alongside your projects and back-up your graphs with git
 

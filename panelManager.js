@@ -35,7 +35,7 @@ function getHtml(scriptUri) {
 </html>`;
 }
 
-function openDesmos({ viewType, title, script, restoredState, onUnsaved }) {
+function openDesmos({ viewType, script, title, restoredState, onUnsaved }) {
   const panel = vscode.window.createWebviewPanel(
     viewType, title, vscode.ViewColumn.One,
     { enableScripts: true, retainContextWhenHidden: true }
@@ -62,7 +62,6 @@ function openDesmos({ viewType, title, script, restoredState, onUnsaved }) {
         fs.writeFileSync(saveUri.fsPath, JSON.stringify(msg.data, null, 2));
         vscode.window.showInformationMessage("Data exported");
         panelState.jsonTemp = msg.data;
-        panel.title = title;
       }
     } else if (msg.command === "tempState") {
       if (panelState.justImported) {
@@ -70,16 +69,10 @@ function openDesmos({ viewType, title, script, restoredState, onUnsaved }) {
         return;
       }
       panelState.tempState = msg.data;
-      if (JSON.stringify(panelState.tempState) !== JSON.stringify(panelState.jsonTemp)) {
-        panel.title = `● ${title}`;
-      } else {
-        panel.title = title;
-      }
     } else if (msg.command === "import") {
       panelState.tempImport = msg.data;
       panelState.tempState = msg.data;
       panelState.justImported = true;
-      panel.title = title;
     }
   });
 
@@ -96,7 +89,6 @@ function openDesmos({ viewType, title, script, restoredState, onUnsaved }) {
 
   if (restoredState) {
     panel.webview.postMessage({ command: "import", data: restoredState });
-    panel.title = title;
   }
 }
 
