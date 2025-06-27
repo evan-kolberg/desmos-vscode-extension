@@ -1,7 +1,7 @@
 {
   "name": "desmos-graphing-calculator",
   "displayName": "Desmos Graphing Calculator",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "publisher": "evan-kolberg",
   "engines": {
     "vscode": "^1.80.0"
@@ -37,11 +37,11 @@
     "commands": [
       {
         "command": "extension.openDesmos",
-        "title": "Desmos: Open Desmos (v1.10.1)"
+        "title": "Desmos: Open Desmos (v1.11.0)"
       },
       {
         "command": "extension.openDesmosPrerelease",
-        "title": "Desmos: Open Desmos (v1.11-prerelease)"
+        "title": "Desmos: Open Desmos (v1.12-prerelease)"
       },
       {
         "command": "extension.exportJson",

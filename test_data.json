@@ -1,0 +1,54 @@
+{
+  "version": 11,
+  "randomSeed": "3974d8974cd560467e468c2ef5795ab4",
+  "graph": {
+    "viewport": {
+      "xmin": -10,
+      "ymin": -13.26388888888889,
+      "xmax": 10,
+      "ymax": 13.26388888888889
+    },
+    "__v12ViewportLatexStash": {
+      "xmin": "-10",
+      "xmax": "10",
+      "ymin": "-13.26388888888889",
+      "ymax": "13.26388888888889"
+    }
+  },
+  "expressions": {
+    "list": [
+      {
+        "type": "expression",
+        "id": "1",
+        "color": "#c74440",
+        "latex": "x^{2}"
+      },
+      {
+        "type": "expression",
+        "id": "2",
+        "color": "#2d70b3",
+        "latex": "\\left[1,2...10\\right]"
+      },
+      {
+        "type": "expression",
+        "id": "3",
+        "color": "#388c46",
+        "latex": "x^{3}"
+      },
+      {
+        "type": "expression",
+        "id": "4",
+        "color": "#6042a6",
+        "latex": "\\cos\\left(\\frac{\\pi}{\\infty}\\right)"
+      },
+      {
+        "type": "expression",
+        "id": "5",
+        "color": "#000000",
+        "latex": "\\sin\\left(\\pi\\right)"
+      }
+    ]
+  },
+  "includeFunctionParametersInRandomSeed": true,
+  "doNotMigrateMovablePointStyle": true
+}

@@ -1,0 +1,29 @@
+check https://www.desmos.com/api/changelog?lang=en
+the topmost one is the latest, stable release
+click it
+then manipulate the link to bump the version up by 0.01 (1.11 -> 1.12)
+see if it exists
+if it does, then that is the prerelease version -- not yet included in the changelog
+
+1. download sources for both
+2. delete old versions & old .vsix from the repo
+3. open up packages.json and bump version
+4. in packages.json, change displayed versions for the commands
+5. open up extension.js
+5. in extension.js, change labels, titles, and paths
+
+6. press F5, and then select vscode extension development to test
+7. make sure that everything works properly
+
+* for maintainer:
+8. run: npm install -g vsce
+9. run: vsce package
+10. run: vsce publish
+
+8. or 11. stage, commit, & push 
+
+
+
+
+
+

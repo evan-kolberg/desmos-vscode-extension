@@ -28,13 +28,13 @@ class DesmosDataProvider {
     const unsavedData = this.context.workspaceState.get('unsavedData', []);
     return [
       {
-        label: "Open Desmos (v1.10.1)",
+        label: "Open Desmos (v1.11.0)",
         command: { command: "extension.openDesmos" },
         tooltip: "Open a stable, offline, & local version of Desmos",
         icon: new vscode.ThemeIcon("add")
       },
       {
-        label: "Open Desmos (v1.11-prerelease)",
+        label: "Open Desmos (v1.12-prerelease)",
         command: { command: "extension.openDesmosPrerelease" },
         tooltip: "Open the latest, offline, & local version of Desmos",
         icon: new vscode.ThemeIcon("add")
@@ -68,11 +68,11 @@ class DesmosDataProvider {
 }
 
 function openDesmosLocal(restoredState, extensionUri, dataProvider) {
-  const desmosUri = vscode.Uri.joinPath(extensionUri, 'desmos_1.10.1.js');
+  const desmosUri = vscode.Uri.joinPath(extensionUri, 'desmos_1.11.0_stable.js');
   openDesmos({
     viewType: 'desmosCalcView',
     script: desmosUri,
-    title: '1.10.1 (Stable)',
+    title: '1.11.0 (Stable)',
     restoredState,
     onUnsaved: (discardedState) => {
       const ws = dataProvider.context.workspaceState;
@@ -87,11 +87,11 @@ function openDesmosLocal(restoredState, extensionUri, dataProvider) {
 }
 
 function openDesmosLocalPrerelease(restoredState, extensionUri, dataProvider) {
-  const desmosUri = vscode.Uri.joinPath(extensionUri, 'desmos_1.11-prerelease.js');
+  const desmosUri = vscode.Uri.joinPath(extensionUri, 'desmos_1.12-prerelease.js');
   openDesmos({
     viewType: 'desmosCalcView',
     script: desmosUri,
-    title: '1.11-prerelease (Latest)',
+    title: '1.12-prerelease (Latest)',
     restoredState,
     onUnsaved: (discardedState) => {
       const ws = dataProvider.context.workspaceState;
