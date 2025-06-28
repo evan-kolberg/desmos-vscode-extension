@@ -28,6 +28,13 @@ function getHtml(scriptUri) {
         vscode.postMessage({ command: "calcState", data: Calc.getState() });
       } else if (evt.data.command === "import") {
         Calc.setState(evt.data.data);
+      } else if (evt.data.command === "randomizeSeed") {
+        const state = Calc.getState();
+        const newSeed = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+          .map(b => b.toString(16).padStart(2, '0')).join('');
+        state.randomSeed = newSeed;
+        Calc.setState(state);
+        vscode.postMessage({ command: "info", message: "Random seed updated." });
       }
     });
   </script>

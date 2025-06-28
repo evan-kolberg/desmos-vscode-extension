@@ -6,6 +6,16 @@
 - Import / Export data
 - Stable & Prerelease versions
 
+#### New:
+- Randomize seed for random() generator
+- Web version
+
+#### New issues:
+- Cannot sign in with Google with web version
+- Due to iframe limitations, cannot export/import/recover web version data
+
+<br>
+
 You can use the calculator alongside your projects and back-up your graphs with git
 
 Note: Please set [```window.confirmBeforeClose```](vscode://settings/window.confirmBeforeClose) to "always" in settings as an extra precaution

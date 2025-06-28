@@ -40,6 +40,18 @@ class DesmosDataProvider {
         icon: new vscode.ThemeIcon("add")
       },
       {
+        label: "Open Online Desmos (Web)",
+        command: { command: "extension.openOnlineDesmos" },
+        tooltip: "Open the online version of Desmos",
+        icon: new vscode.ThemeIcon("globe")
+      },
+      {
+        label: "Randomize Seed",
+        command: { command: "extension.randomizeSeed" },
+        tooltip: "Randomize the calculator's random seed",
+        icon: new vscode.ThemeIcon("refresh")
+      },
+      {
         label: "Export Data",
         command: { command: "extension.exportJson" },
         tooltip: "Export all current data from the calculator",
@@ -106,6 +118,32 @@ function openDesmosLocalPrerelease(restoredState, extensionUri, dataProvider) {
 }
 
 function activate(context) {
+  context.subscriptions.push(
+    vscode.commands.registerCommand("extension.openOnlineDesmos", () => {
+      const panel = vscode.window.createWebviewPanel(
+        'onlineDesmos',
+        'Online Desmos (Web)',
+        vscode.ViewColumn.One,
+        {
+          enableScripts: true,
+          retainContextWhenHidden: true,
+        }
+      );
+      panel.webview.html = `<!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta http-equiv="Content-Security-Policy" content="default-src https:; frame-src https://www.desmos.com https://*.desmos.com; child-src https://www.desmos.com https://*.desmos.com; script-src https: 'unsafe-inline'; style-src https: 'unsafe-inline';">
+          <title>Online Desmos</title>
+          <style>html,body{height:100%;margin:0;padding:0;}iframe{border:none;width:100vw;height:100vh;}</style>
+        </head>
+        <body>
+          <div style="padding:8px;background:#fff;color:#333;font-size:13px;">Certain features (e.g., signing-in) may not work due to browser security restrictions. For full functionality, please use Desmos in your personal browser.</div>
+          <iframe id="desmos-iframe" src="https://www.desmos.com/calculator" allow="clipboard-write; clipboard-read; fullscreen;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
+        </body>
+        </html>`;
+    })
+  );
   const dataProvider = new DesmosDataProvider(context);
   vscode.window.registerTreeDataProvider("desmosCalcView", dataProvider);
   dataProvider.refresh();
@@ -116,6 +154,14 @@ function activate(context) {
     }),
     vscode.commands.registerCommand("extension.openDesmosPrerelease", () => {
       openDesmosLocalPrerelease(null, context.extensionUri, dataProvider);
+    }),
+    vscode.commands.registerCommand("extension.randomizeSeed", () => {
+      const panel = getPanel();
+      if (!panel) {
+        vscode.window.showErrorMessage("No active panel available");
+        return;
+      }
+      panel.webview.postMessage({ command: "randomizeSeed" });
     }),
     vscode.commands.registerCommand("extension.exportJson", () => {
       const panel = getPanel();

@@ -1,0 +1,222 @@
+{
+  "version": 11,
+  "randomSeed": "0cbc5a6aaa97ffc02ec0c3d25af7caf3",
+  "graph": {
+    "viewport": {
+      "xmin": -100.72682402988448,
+      "ymin": -10.235520721178972,
+      "xmax": 2362.069414128535,
+      "ymax": 176.93699337885448
+    },
+    "showGrid": false,
+    "xAxisStep": 365,
+    "yAxisStep": 5,
+    "xAxisArrowMode": "POSITIVE",
+    "yAxisArrowMode": "POSITIVE",
+    "xAxisLabel": "Day",
+    "yAxisLabel": "Price",
+    "restrictGridToFirstQuadrant": true,
+    "squareAxes": false,
+    "__v12ViewportLatexStash": {
+      "xmin": "-100.72682402988448",
+      "xmax": "2362.069414128535",
+      "ymin": "-10.235520721178972",
+      "ymax": "176.93699337885448"
+    }
+  },
+  "expressions": {
+    "list": [
+      {
+        "type": "text",
+        "id": "dsm-metadata",
+        "text": "{\"version\":2,\"expressions\":{\"33\":{\"errorHidden\":true}}}",
+        "secret": true
+      },
+      {
+        "type": "expression",
+        "id": "79",
+        "color": "#c74440",
+        "latex": "n=2190",
+        "slider": {
+          "hardMin": true,
+          "hardMax": true,
+          "animationPeriod": 80000,
+          "loopMode": "PLAY_ONCE",
+          "min": "0",
+          "max": "2190",
+          "step": "1"
+        }
+      },
+      {
+        "type": "text",
+        "id": "88",
+        "text": "generates a list of n number random values from 0 to 1"
+      },
+      {
+        "type": "expression",
+        "id": "57",
+        "color": "#c74440",
+        "latex": "r=\\operatorname{random}\\left(n\\right)",
+        "hidden": true
+      },
+      {
+        "type": "text",
+        "id": "89",
+        "text": "this function creates a new list. for each value in r, if r > 0.5, append 1; else, append -1. the above and below lists are used to create a random \"coin toss\" scenario."
+      },
+      {
+        "type": "expression",
+        "id": "58",
+        "color": "#2d70b3",
+        "latex": "d=\\left\\{r\\ >\\ 0.5:\\ 1,\\ -1\\right\\}"
+      },
+      {
+        "type": "expression",
+        "id": "60",
+        "color": "#6042a6",
+        "latex": "f\\left(0\\right)=100"
+      },
+      {
+        "type": "text",
+        "id": "90",
+        "text": "generates a list of n number x values"
+      },
+      {
+        "type": "expression",
+        "id": "78",
+        "color": "#000000",
+        "latex": "x_{i}=\\left[i\\operatorname{for}\\ i=\\left[0...n\\right]\\right]"
+      },
+      {
+        "type": "text",
+        "id": "91",
+        "text": "implements a recursive function in which each subsequent value adds either a 1 or -1 (from list d) to the previous value. \"d[n]\" is used to get the value of the nth index of d."
+      },
+      {
+        "type": "expression",
+        "id": "66",
+        "color": "#6042a6",
+        "latex": "f\\left(n\\right)=f\\left(n-1\\right)+d\\left[n\\right]"
+      },
+      {
+        "type": "text",
+        "id": "98",
+        "text": "using a table to graph the recursive function"
+      },
+      {
+        "id": "68",
+        "type": "table",
+        "columns": [
+          {
+            "values": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "",
+              ""
+            ],
+            "hidden": true,
+            "id": "69",
+            "color": "#2d70b3",
+            "latex": "x_{i}"
+          },
+          {
+            "id": "70",
+            "color": "#2d70b3",
+            "points": false,
+            "lines": true,
+            "latex": "f\\left(x_{i}\\right)",
+            "lineOpacity": "1",
+            "lineWidth": "1"
+          }
+        ]
+      },
+      {
+        "type": "text",
+        "id": "86",
+        "text": "places the vertical lines denoting a year. Divide n by 365 to see how many years fit within the current n value. Then, make a list from 0 to that value, multiplying 365 at every index. Because when (num).5+ rounds up to the next value (i.e., [1, 2, 3.5] -> [1, 2, 3, 4]), compensate for a half-step by flooring the value. From 0.5 to the next whole number, the list will round up--so the floor() eliminates this rounding behavior. It will appear that the price simulation \"crosses\" in sync with the next year."
+      },
+      {
+        "type": "expression",
+        "id": "81",
+        "color": "#388c46",
+        "latex": "v=\\left[365i\\ \\operatorname{for}\\ i=\\left[0...\\operatorname{floor}\\left(\\frac{n}{365}\\right)\\right]\\right]"
+      },
+      {
+        "type": "expression",
+        "id": "82",
+        "color": "#388c46",
+        "latex": "x=v\\left\\{y>0\\right\\}",
+        "lineStyle": "DASHED",
+        "lineWidth": "1"
+      },
+      {
+        "type": "text",
+        "id": "150",
+        "text": "making the SMA 200 curve"
+      },
+      {
+        "type": "expression",
+        "id": "140",
+        "color": "#000000",
+        "latex": "w_{1}=200-1"
+      },
+      {
+        "type": "text",
+        "id": "142",
+        "text": "f(x_i) returns a list of the aforementioned values. use [n-w...n] to return a list with the last 200 values. w is 200-1 because you are including the first index. like counting to 3 but starting with 0. 4 total numbers. anyway, use total to add up all the values in the list. divide by w+1 to get an average over this interval. you add 1 because fetching n-199...n will return 200 values. so if w is 200-1 (obv 199), you need to divide by +1 that  to get an accurate avg.\n\n\\operatorname{length}\\left(f\\left(x_{i}\\right)\\left[n-w...n\\right]\\right)\n\nshould equal 200 for an SMA200 curve"
+      },
+      {
+        "type": "expression",
+        "id": "145",
+        "color": "#388c46",
+        "latex": "\\operatorname{length}\\left(f\\left(x_{i}\\right)\\left[n-w_{1}...n\\right]\\right)"
+      },
+      {
+        "type": "expression",
+        "id": "134",
+        "color": "#6042a6",
+        "latex": "g\\left(n\\right)=\\left[\\frac{\\operatorname{total}\\left(f\\left(x_{i}\\right)\\left[n-w_{1}...n\\right]\\right)}{w_{1}+1}\\right]",
+        "lineWidth": "2"
+      },
+      {
+        "type": "text",
+        "id": "155",
+        "text": "making the SMA 50 curve"
+      },
+      {
+        "type": "expression",
+        "id": "156",
+        "color": "#2d70b3",
+        "latex": "w_{2}=50-1"
+      },
+      {
+        "type": "expression",
+        "id": "157",
+        "color": "#388c46",
+        "latex": "\\operatorname{length}\\left(f\\left(x_{i}\\right)\\left[n-w_{2}...n\\right]\\right)"
+      },
+      {
+        "type": "expression",
+        "id": "158",
+        "color": "#fa7e19",
+        "latex": "h\\left(n\\right)=\\left[\\frac{\\operatorname{total}\\left(f\\left(x_{i}\\right)\\left[n-w_{2}...n\\right]\\right)}{w_{2}+1}\\right]",
+        "lineWidth": "2"
+      },
+      {
+        "type": "text",
+        "id": "159",
+        "text": "when the 50 SMA crosses above the 200 SMA, this is a called a golden cross. vice versa, this is called a death cross. lmao. "
+      },
+      {
+        "type": "expression",
+        "id": "162",
+        "color": "#2d70b3"
+      }
+    ]
+  },
+  "includeFunctionParametersInRandomSeed": true,
+  "doNotMigrateMovablePointStyle": true
+}
