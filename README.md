@@ -3,16 +3,19 @@
 #### Advantages
 - Offline & local
 - Recover unsaved work
-- Import / Export data
+- Import & Export data
 - Stable & Prerelease versions
-
-#### New:
 - Randomize seed for random() generator
-- Web version
+- Web access to other calculators
+- Side-by-side panel for viewing & altering Desmos json data
+
+#### Notes:
+- The recovery list is limited to 1000 projects, by design
+
 
 #### New issues:
 - Cannot sign in with Google with web version
-- Due to iframe limitations, cannot export/import/recover web version data
+- Due to iframe limitations, cannot export, import, or recover web version data
 
 <br>
 

@@ -17,15 +17,19 @@ class DesmosDataProvider {
   }
 
   getTreeItem(element) {
-    const treeItem = new vscode.TreeItem(element.label, vscode.TreeItemCollapsibleState.None);
+    const treeItem = new vscode.TreeItem(element.label, element.collapsibleState ?? vscode.TreeItemCollapsibleState.None);
     treeItem.command = element.command;
     treeItem.tooltip = element.tooltip;
     treeItem.iconPath = element.icon;
+    if (element.children) treeItem.collapsibleState = element.collapsibleState;
     return treeItem;
   }
 
-  getChildren() {
+  getChildren(element) {
     const unsavedData = this.context.workspaceState.get('unsavedData', []);
+    if (element && element.children) {
+      return element.children;
+    }
     return [
       {
         label: "Open Desmos (v1.11.0)",
@@ -69,12 +73,30 @@ class DesmosDataProvider {
         tooltip: "Clear all unsaved recovery items",
         icon: new vscode.ThemeIcon("trash")
       },
-      ...unsavedData.map(item => ({
-        label: `Unsaved: ${item}`,
-        command: { command: "extension.recoverData", arguments: [item] },
-        tooltip: "Recover unsaved data",
-        icon: new vscode.ThemeIcon("close-dirty")
-      })),
+      {
+        label: `Recovery Items (${unsavedData.length})`,
+        collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
+        icon: new vscode.ThemeIcon("close-dirty"),
+        children: unsavedData.map(item => {
+          let labelTime = 'Invalid date';
+          let firstLatex = '';
+          try {
+            const parsed = JSON.parse(item);
+            const dt = new Date(parsed.timestamp);
+            labelTime = dt.toLocaleTimeString();
+            if (parsed.data && parsed.data.expressions && Array.isArray(parsed.data.expressions.list) && parsed.data.expressions.list.length > 0) {
+              firstLatex = parsed.data.expressions.list[0].latex || '';
+            }
+          } catch {}
+          const displayLabel = firstLatex ? `${labelTime} – ${firstLatex}` : labelTime;
+          return {
+            label: displayLabel,
+            command: { command: "extension.recoverData", arguments: [item] },
+            tooltip: "Recover unsaved data",
+            icon: new vscode.ThemeIcon("close-dirty")
+          };
+        })
+      }
     ];
   }
 }
@@ -86,14 +108,8 @@ function openDesmosLocal(restoredState, extensionUri, dataProvider) {
     script: desmosUri,
     title: '1.11.0 (Stable)',
     restoredState,
-    onUnsaved: (discardedState) => {
-      const ws = dataProvider.context.workspaceState;
-      const timestamp = new Date().toISOString();
-      const state = JSON.stringify({ version: 'stable', data: discardedState, timestamp });
-      const unsavedData = ws.get('unsavedData', []);
-      unsavedData.push(state);
-      ws.update('unsavedData', unsavedData);
-      dataProvider.refresh();
+    onUnsaved: (discardedState, hasRecovery) => {
+      updateRecovery('stable', discardedState, hasRecovery, dataProvider);
     }
   });
 }
@@ -105,16 +121,25 @@ function openDesmosLocalPrerelease(restoredState, extensionUri, dataProvider) {
     script: desmosUri,
     title: '1.12-prerelease (Latest)',
     restoredState,
-    onUnsaved: (discardedState) => {
-      const ws = dataProvider.context.workspaceState;
-      const timestamp = new Date().toISOString();
-      const state = JSON.stringify({ version: 'prerelease', data: discardedState, timestamp });
-      const unsavedData = ws.get('unsavedData', []);
-      unsavedData.push(state);
-      ws.update('unsavedData', unsavedData);
-      dataProvider.refresh();
+    onUnsaved: (discardedState, hasRecovery) => {
+      updateRecovery('prerelease', discardedState, hasRecovery, dataProvider);
     }
   });
+}
+
+function updateRecovery(version, discardedState, hasRecovery, dataProvider) {
+  const ws = dataProvider.context.workspaceState;
+  const timestamp = new Date().toISOString();
+  const state = JSON.stringify({ version, data: discardedState, timestamp });
+  let unsavedData = ws.get('unsavedData', []);
+  if (hasRecovery && unsavedData.length > 0) {
+    unsavedData[0] = state;
+  } else {
+    unsavedData.unshift(state);
+  }
+  if (unsavedData.length > 1000) unsavedData = unsavedData.slice(0, 100);
+  ws.update('unsavedData', unsavedData);
+  dataProvider.refresh();
 }
 
 function activate(context) {
@@ -210,7 +235,7 @@ function activate(context) {
     vscode.commands.registerCommand("extension.clearUnsavedData", () => {
       context.workspaceState.update('unsavedData', []);
       dataProvider.refresh();
-      vscode.window.showInformationMessage("All unsaved recovery items cleared");
+      vscode.window.showInformationMessage("All recovery items cleared");
     })
   );
 }
