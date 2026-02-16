@@ -6,7 +6,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/evan-kolberg/desmos-vscode-extension/ci.yml?label=CI)](https://github.com/evan-kolberg/desmos-vscode-extension/actions)
 [![GitHub Issues](https://img.shields.io/github/issues/evan-kolberg/desmos-vscode-extension)](https://github.com/evan-kolberg/desmos-vscode-extension/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/evan-kolberg/desmos-vscode-extension)](https://github.com/evan-kolberg/desmos-vscode-extension/commits)
-[![GitHub Stars](https://img.shields.io/github/stars/evan-kolberg/desmos-vscode-extension)](https://github.com/evan-kolberg/desmos-vscode-extension/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/evan-kolberg/desmos-vscode-extension?style=flat)](https://github.com/evan-kolberg/desmos-vscode-extension/stargazers)
 
 <img width="1756" height="1016" alt="Screenshot 2026-02-16 at 3 32 46 PM" src="https://github.com/user-attachments/assets/b130a314-66db-42c5-b041-4fe3ad3709c6" />
 
