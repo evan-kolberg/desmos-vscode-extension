@@ -4,9 +4,11 @@
 [![Downloads](https://img.shields.io/visual-studio-marketplace/d/evan-kolberg.desmos-graphing-calculator)](https://marketplace.visualstudio.com/items?itemName=evan-kolberg.desmos-graphing-calculator)
 [![License: MIT](https://img.shields.io/github/license/evan-kolberg/desmos-vscode-extension)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/evan-kolberg/desmos-vscode-extension/ci.yml?label=CI)](https://github.com/evan-kolberg/desmos-vscode-extension/actions)
-[![GitHub Stars](https://img.shields.io/github/stars/evan-kolberg/desmos-vscode-extension)](https://github.com/evan-kolberg/desmos-vscode-extension/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/evan-kolberg/desmos-vscode-extension)](https://github.com/evan-kolberg/desmos-vscode-extension/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/evan-kolberg/desmos-vscode-extension)](https://github.com/evan-kolberg/desmos-vscode-extension/commits)
+[![GitHub Stars](https://img.shields.io/github/stars/evan-kolberg/desmos-vscode-extension)](https://github.com/evan-kolberg/desmos-vscode-extension/stargazers)
+
+<img width="1756" height="1016" alt="Screenshot 2026-02-16 at 3 32 46 PM" src="https://github.com/user-attachments/assets/b130a314-66db-42c5-b041-4fe3ad3709c6" />
 
 ## Features
 
@@ -31,6 +33,7 @@ Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/item
 > **Tip:** Set [`window.confirmBeforeClose`](vscode://settings/window.confirmBeforeClose) to `"always"` in VS Code settings as an extra precaution against losing unsaved work.
 
 ## Supported Calculators
+<img src="https://github.com/user-attachments/assets/55e28c86-a449-4bb8-9892-d09d15d143da" width="200" />
 
 | Calculator | Description |
 |---|---|
