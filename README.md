@@ -1,6 +1,15 @@
-# Desmos Graphing Calculator VSCode Extension
+# Desmos Software Suite for VS Code
 
-#### Advantages
+[![VS Code Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/evan-kolberg.desmos-graphing-calculator)](https://marketplace.visualstudio.com/items?itemName=evan-kolberg.desmos-graphing-calculator)
+[![Downloads](https://img.shields.io/visual-studio-marketplace/d/evan-kolberg.desmos-graphing-calculator)](https://marketplace.visualstudio.com/items?itemName=evan-kolberg.desmos-graphing-calculator)
+[![License: MIT](https://img.shields.io/github/license/evan-kolberg/desmos-vscode-extension)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/evan-kolberg/desmos-vscode-extension/ci.yml?label=CI)](https://github.com/evan-kolberg/desmos-vscode-extension/actions)
+[![GitHub Stars](https://img.shields.io/github/stars/evan-kolberg/desmos-vscode-extension)](https://github.com/evan-kolberg/desmos-vscode-extension/stargazers)
+[![GitHub Issues](https://img.shields.io/github/issues/evan-kolberg/desmos-vscode-extension)](https://github.com/evan-kolberg/desmos-vscode-extension/issues)
+[![Last Commit](https://img.shields.io/github/last-commit/evan-kolberg/desmos-vscode-extension)](https://github.com/evan-kolberg/desmos-vscode-extension/commits)
+
+## Features
+
 - Offline & local
 - Recover unsaved work
 - Import & Export data
@@ -9,21 +18,44 @@
 - Web access to other calculators
 - Side-by-side panel for viewing & altering Desmos json data
 
-#### Notes:
-- The recovery list is limited to 1000 projects, by design
+## Installation
 
+Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=evan-kolberg.desmos-graphing-calculator), or search for **"Desmos"** in the VS Code Extensions panel.
 
-#### New issues:
-- Cannot sign in with Google with web version
-- Due to iframe limitations, cannot export, import, or recover web version data
+## Getting Started
 
-<br>
+1. After installation, find the **Desmos** icon in the Activity Bar (left sidebar).
+2. Click any calculator type to open it in a new tab.
+3. Use the sidebar buttons to import, export, randomize seed, or recover unsaved work.
 
-You can use the calculator alongside your projects and back-up your graphs with git
+> **Tip:** Set [`window.confirmBeforeClose`](vscode://settings/window.confirmBeforeClose) to `"always"` in VS Code settings as an extra precaution against losing unsaved work.
 
-Note: Please set [```window.confirmBeforeClose```](vscode://settings/window.confirmBeforeClose) to "always" in settings as an extra precaution
+## Supported Calculators
 
-<br><br>
-Find any bugs? [Report them here](https://github.com/evan-kolberg/desmos-vscode-extension/tree/main), and I'll fix them ASAP
+| Calculator | Description |
+|---|---|
+| Graphing | Full-featured graphing with expressions, tables, and sliders |
+| 3D | Three-dimensional graphing and visualization |
+| Geometry | Interactive geometric constructions |
+| Scientific | Standard scientific calculator |
+| Four Function | Basic arithmetic calculator |
 
-*Desmos Graphing Calculator is intellectual property of Desmos Studio, PBC*
+## Known Limitations
+
+- Recovery list is capped at 1000 items (by design).
+- The embedded web version cannot sign in with Google (iframe security restrictions).
+- Import, export, and recovery are not available for the embedded web version.
+
+## Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+*The Desmos API key used is the official demo key: `dcb31709b452b1cf9dc26972add0fda6`*
+
+*Desmos Graphing Calculator is intellectual property of [Desmos Studio, PBC](https://www.desmos.com).*

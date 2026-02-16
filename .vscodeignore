@@ -1,0 +1,11 @@
+.github/**
+.vscode/**
+.claude/**
+test/**
+docs/**
+examples/**
+node_modules/**
+.gitignore
+.DS_Store
+CONTRIBUTING.md
+*.vsix

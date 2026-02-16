@@ -1,13 +1,26 @@
 {
   "name": "desmos-graphing-calculator",
-  "displayName": "Desmos Graphing Calculator",
-  "version": "0.3.0",
+  "displayName": "Desmos Software Suite",
+  "version": "0.4.1",
   "publisher": "evan-kolberg",
+  "license": "MIT",
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "desmos",
+    "graphing",
+    "calculator",
+    "math",
+    "3d",
+    "geometry"
+  ],
   "engines": {
     "vscode": "^1.80.0"
   },
-  "main": "./extension.js",
-  "icon": "./desmos-icon.png",
+  "main": "./src/extension.js",
+  "icon": "./assets/supported_suite.jpg",
   "activationEvents": [
     "onCommand:extension.recoverData"
   ],
@@ -21,7 +34,7 @@
         {
           "id": "desmosViewContainer",
           "title": "Desmos",
-          "icon": "./desmos-activity-bar.png"
+          "icon": "./assets/desmos-activity-bar.png"
         }
       ]
     },
@@ -29,19 +42,35 @@
       "desmosViewContainer": [
         {
           "id": "desmosCalcView",
-          "name": "Graphing Calculator",
-          "icon": "./desmos-activity-bar.png"
+          "name": "Desmos Calculators",
+          "icon": "./assets/desmos-activity-bar.png"
         }
       ]
     },
     "commands": [
       {
         "command": "extension.openDesmos",
-        "title": "Desmos: Open Desmos (v1.11.0)"
+        "title": "Desmos: Graphing Calculator"
       },
       {
-        "command": "extension.openDesmosPrerelease",
-        "title": "Desmos: Open Desmos (v1.12-prerelease)"
+        "command": "extension.openDesmos3D",
+        "title": "Desmos: 3D Calculator"
+      },
+      {
+        "command": "extension.openDesmosScientific",
+        "title": "Desmos: Scientific Calculator"
+      },
+      {
+        "command": "extension.openDesmosFourFunction",
+        "title": "Desmos: Four Function Calculator"
+      },
+      {
+        "command": "extension.openDesmosGeometry",
+        "title": "Desmos: Geometry Calculator"
+      },
+      {
+        "command": "extension.togglePrerelease",
+        "title": "Desmos: Toggle Prerelease Version"
       },
       {
         "command": "extension.openOnlineDesmos",
@@ -65,8 +94,13 @@
       }
     ]
   },
+  "scripts": {
+    "test": "mocha --require test/setup.js --timeout 10000"
+  },
   "dependencies": {},
   "devDependencies": {
+    "chai": "^4.3.10",
+    "mocha": "^10.2.0",
     "vscode": "^1.1.34"
   }
 }
