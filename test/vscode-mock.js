@@ -60,6 +60,7 @@ class TreeItem {
 }
 
 const ViewColumn = { One: 1, Two: 2, Three: 3 };
+const StatusBarAlignment = { Left: 1, Right: 2 };
 
 const commands = {
   _registered: {},
@@ -104,24 +105,82 @@ const window = {
     return panel;
   },
   registerTreeDataProvider() {},
+  registerCustomEditorProvider() { return { dispose: () => {} }; },
   showInformationMessage() {},
   showErrorMessage() {},
   showSaveDialog() { return Promise.resolve(null); },
-  showOpenDialog() { return Promise.resolve(null); }
+  showOpenDialog() { return Promise.resolve(null); },
+  createStatusBarItem() {
+    return { text: '', tooltip: '', show() {}, hide() {}, dispose() {} };
+  }
 };
 
-const workspace = {};
+class RelativePattern {
+  constructor(base, pattern) {
+    this.base = base;
+    this.pattern = pattern;
+  }
+}
+
+class Range {
+  constructor(start, end) {
+    this.start = start;
+    this.end = end;
+  }
+}
+
+class WorkspaceEdit {
+  constructor() { this._edits = []; }
+  replace(uri, range, text) { this._edits.push({ uri, range, text }); }
+  createFile(uri, options) { this._edits.push({ type: 'create', uri, options }); }
+  renameFile(oldUri, newUri, options) { this._edits.push({ type: 'rename', oldUri, newUri, options }); }
+}
+
+const workspace = {
+  workspaceFolders: [{ uri: Uri.file('/tmp/test-workspace') }],
+  fs: {
+    readFile() { return Promise.resolve(Buffer.from('{}', 'utf8')); },
+    writeFile() { return Promise.resolve(); },
+    delete() { return Promise.resolve(); }
+  },
+  createFileSystemWatcher() {
+    return {
+      onDidChange() { return { dispose: () => {} }; },
+      onDidCreate() { return { dispose: () => {} }; },
+      dispose() {}
+    };
+  },
+  findFiles() { return Promise.resolve([]); },
+  openTextDocument() {
+    return Promise.resolve({
+      getText() { return '{}'; },
+      get lineCount() { return 1; },
+      positionAt(offset) { return { line: 0, character: offset }; },
+      save() { return Promise.resolve(true); }
+    });
+  },
+  applyEdit() { return Promise.resolve(true); }
+};
+
+const extensions = {
+  getExtension() { return null; }
+};
 
 module.exports = {
   EventEmitter,
   Uri,
+  Range,
+  WorkspaceEdit,
+  RelativePattern,
   ThemeIcon,
   ThemeColor,
   TreeItemCollapsibleState,
   TreeItem,
   ViewColumn,
+  StatusBarAlignment,
   commands,
   window,
   workspace,
+  extensions,
   _panels
 };

@@ -1,8 +1,33 @@
 const vscode = require('vscode');
 const fs = require('fs');
+const path = require('path');
 const { openDesmos, getPanel, setTempImport } = require('./panelManager');
+const liveshare = require('./liveshare');
 
-let usePrerelease = false;
+let usePrerelease = true;
+
+let lastLocalActivity = 0;
+let pendingRemoteState = null;
+let remoteApplyTimer = null;
+const TYPING_COOLDOWN_MS = 1000;
+
+function applyRemoteState(state) {
+  const panel = getPanel();
+  if (panel) {
+    setTempImport(panel, state);
+    panel.webview.postMessage({ command: 'import', data: state });
+  }
+}
+
+const SYNC_FILES = {
+  GraphingCalculator: 'graphing.desmos',
+  Calculator3D: '3d.desmos',
+  Geometry: 'geometry.desmos',
+};
+
+function sanitizeFilename(str) {
+  return str.replace(/[:/\\|?*<>"]/g, '-').trim().slice(0, 60);
+}
 
 class DesmosDataProvider {
   constructor(context) {
@@ -73,12 +98,6 @@ class DesmosDataProvider {
         icon: new vscode.ThemeIcon(usePrerelease ? "pass-filled" : "circle-large-outline", new vscode.ThemeColor("charts.yellow"))
       },
       {
-        label: "Open Online Desmos (Web)",
-        command: { command: "extension.openOnlineDesmos" },
-        tooltip: "Open the online version of Desmos",
-        icon: new vscode.ThemeIcon("globe")
-      },
-      {
         label: "Randomize Seed",
         command: { command: "extension.randomizeSeed" },
         tooltip: "Randomize the calculator's random seed",
@@ -89,12 +108,6 @@ class DesmosDataProvider {
         command: { command: "extension.exportJson" },
         tooltip: "Export all current data from the calculator",
         icon: new vscode.ThemeIcon("save-as")
-      },
-      {
-        label: "Import Data",
-        command: { command: "extension.importJson" },
-        tooltip: "Import data into the calculator",
-        icon: new vscode.ThemeIcon("new-file")
       },
       {
         label: "Clear Recovery Items",
@@ -130,7 +143,7 @@ class DesmosDataProvider {
   }
 }
 
-function openDesmosLocal(restoredState, extensionUri, dataProvider, calculatorType) {
+async function openDesmosLocal(restoredState, extensionUri, dataProvider, calculatorType, context, existingPanel, documentUri) {
   calculatorType = calculatorType || 'GraphingCalculator';
   const calcNames = {
     GraphingCalculator: 'Graphing',
@@ -143,16 +156,165 @@ function openDesmosLocal(restoredState, extensionUri, dataProvider, calculatorTy
   const version = usePrerelease ? 'prerelease' : 'stable';
   const versionLabel = usePrerelease ? 'v1.12-pre' : 'v1.11.4';
   const desmosUri = vscode.Uri.joinPath(extensionUri, 'lib', file);
+  const jsonTheme = context ? context.globalState.get('jsonTheme', 'dracula') : 'dracula';
+  const hasState = ['GraphingCalculator', 'Calculator3D', 'Geometry'].includes(calculatorType);
+
+  const folders = vscode.workspace.workspaceFolders;
+  const rootUri = folders?.[0]?.uri;
+
+  let syncPath = null;
+  let syncUri = null;
+  let syncUriIsNew = false;
+  let currentDraftPath = null;
+  let draftNameFinalized = false;
+  const timeStr = sanitizeFilename(new Date().toLocaleTimeString());
+
+  if (documentUri) {
+    if (documentUri.scheme === 'file') {
+      syncPath = documentUri.fsPath;
+    } else {
+      syncUri = documentUri;
+    }
+  } else if (hasState && rootUri?.scheme === 'file') {
+    currentDraftPath = path.join(rootUri.fsPath, timeStr + '.desmos');
+  } else if (hasState && rootUri) {
+    syncUri = vscode.Uri.joinPath(rootUri, timeStr + '.desmos');
+    syncUriIsNew = true;
+  }
+
+  let lastKnownContent = null;
+  if (!restoredState) {
+    if (syncPath) {
+      try {
+        lastKnownContent = fs.readFileSync(syncPath, 'utf8');
+        restoredState = JSON.parse(lastKnownContent);
+      } catch {}
+    } else if (syncUri) {
+      try {
+        const bytes = await vscode.workspace.fs.readFile(syncUri);
+        lastKnownContent = Buffer.from(bytes).toString('utf8');
+        restoredState = JSON.parse(lastKnownContent);
+      } catch {}
+    }
+  }
+
+  let writeTimer = null;
+
   openDesmos({
     viewType: 'desmosCalcView',
     script: desmosUri,
     title: `${calcNames[calculatorType] || calculatorType} (${versionLabel})`,
     restoredState,
     calculatorType,
+    jsonTheme,
+    existingPanel,
     onUnsaved: (discardedState, hasRecovery) => {
+      lastLocalActivity = Date.now();
+      if (pendingRemoteState) {
+        clearTimeout(remoteApplyTimer);
+        remoteApplyTimer = setTimeout(() => {
+          if (pendingRemoteState) { applyRemoteState(pendingRemoteState); pendingRemoteState = null; }
+        }, TYPING_COOLDOWN_MS);
+      }
       updateRecovery(version, discardedState, hasRecovery, dataProvider, calculatorType);
+      liveshare.broadcastState(discardedState, calculatorType);
+      const writePath = syncPath || currentDraftPath;
+      if (writePath || syncUri) {
+        clearTimeout(writeTimer);
+        writeTimer = setTimeout(async () => {
+          if (currentDraftPath && !draftNameFinalized) {
+            const firstExpr = discardedState.expressions?.list?.find(e => e.latex)?.latex || '';
+            if (firstExpr.length >= 3) {
+              const newName = sanitizeFilename(timeStr + ' – ' + firstExpr.slice(0, 30)) + '.desmos';
+              const newPath = path.join(rootUri.fsPath, newName);
+              if (newPath !== currentDraftPath) {
+                try { if (fs.existsSync(currentDraftPath)) fs.renameSync(currentDraftPath, newPath); } catch {}
+                currentDraftPath = newPath;
+              }
+              draftNameFinalized = true;
+            }
+          } else if (syncUri && syncUriIsNew && !draftNameFinalized) {
+            const firstExpr = discardedState.expressions?.list?.find(e => e.latex)?.latex || '';
+            if (firstExpr.length >= 3) {
+              const newName = sanitizeFilename(timeStr + ' – ' + firstExpr.slice(0, 30)) + '.desmos';
+              const newUri = vscode.Uri.joinPath(rootUri, newName);
+              try {
+                const renameEdit = new vscode.WorkspaceEdit();
+                renameEdit.renameFile(syncUri, newUri, { ignoreIfExists: true });
+                const ok = await vscode.workspace.applyEdit(renameEdit);
+                if (ok) syncUri = newUri;
+              } catch {}
+              draftNameFinalized = true;
+            }
+          }
+
+          const content = JSON.stringify({ ...discardedState, _calculatorType: calculatorType }, null, 2);
+          lastKnownContent = content;
+          const wp = syncPath || currentDraftPath;
+          if (wp) {
+            fs.writeFile(wp, content, 'utf8', () => {});
+          } else if (syncUri) {
+            try {
+              let doc;
+              try {
+                doc = await vscode.workspace.openTextDocument(syncUri);
+              } catch {
+                const createEdit = new vscode.WorkspaceEdit();
+                createEdit.createFile(syncUri, { ignoreIfExists: true });
+                await vscode.workspace.applyEdit(createEdit);
+                doc = await vscode.workspace.openTextDocument(syncUri);
+              }
+              const edit = new vscode.WorkspaceEdit();
+              edit.replace(syncUri, new vscode.Range(
+                doc.positionAt(0),
+                doc.positionAt(doc.getText().length)
+              ), content);
+              await vscode.workspace.applyEdit(edit);
+              await doc.save();
+            } catch {}
+          }
+        }, 150);
+      }
+    },
+    onSave: (savedFsPath) => {
+      if (currentDraftPath && currentDraftPath !== savedFsPath) {
+        try { if (fs.existsSync(currentDraftPath)) fs.unlinkSync(currentDraftPath); } catch {}
+      }
+      currentDraftPath = null;
+    },
+    onThemeChange: (theme) => {
+      if (context) context.globalState.update('jsonTheme', theme);
     }
   });
+
+  if ((syncPath || currentDraftPath || syncUri) && context) {
+    const checkForUpdate = async () => {
+      if (Date.now() - lastLocalActivity < TYPING_COOLDOWN_MS) return;
+      const currentReadPath = syncPath || currentDraftPath;
+      if (!currentReadPath && !syncUri) return;
+      let content;
+      try {
+        if (currentReadPath) {
+          content = fs.readFileSync(currentReadPath, 'utf8');
+        } else {
+          const bytes = await vscode.workspace.fs.readFile(syncUri);
+          content = Buffer.from(bytes).toString('utf8');
+        }
+      } catch { return; }
+      if (content === lastKnownContent) return;
+      lastKnownContent = content;
+      let data;
+      try { data = JSON.parse(content); } catch { return; }
+      if (!data || !data.version) return;
+      const panel = getPanel();
+      if (panel) {
+        setTempImport(panel, data);
+        panel.webview.postMessage({ command: 'import', data });
+      }
+    };
+    const pollInterval = setInterval(checkForUpdate, 400);
+    context.subscriptions.push({ dispose: () => clearInterval(pollInterval) });
+  }
 }
 
 function updateRecovery(version, discardedState, hasRecovery, dataProvider, calculatorType) {
@@ -170,52 +332,80 @@ function updateRecovery(version, discardedState, hasRecovery, dataProvider, calc
   dataProvider.refresh();
 }
 
+class DesmosFileEditorProvider {
+  constructor(context, dataProvider) {
+    this._context = context;
+    this._dataProvider = dataProvider;
+  }
+
+  resolveCustomTextEditor(document, webviewPanel, _token) {
+    let restoredState = null;
+    try { restoredState = JSON.parse(document.getText()); } catch {}
+    const filename = path.basename(document.uri.fsPath);
+    const calcType = restoredState?._calculatorType
+      || Object.entries(SYNC_FILES).find(([, f]) => f === filename)?.[0]
+      || 'GraphingCalculator';
+    openDesmosLocal(restoredState, this._context.extensionUri, this._dataProvider, calcType, this._context, webviewPanel, document.uri);
+  }
+}
+
 function activate(context) {
-  context.subscriptions.push(
-    vscode.commands.registerCommand("extension.openOnlineDesmos", () => {
-      const panel = vscode.window.createWebviewPanel(
-        'onlineDesmos',
-        'Online Desmos (Web)',
-        vscode.ViewColumn.One,
-        {
-          enableScripts: true,
-          retainContextWhenHidden: true,
-        }
-      );
-      panel.webview.html = `<!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta http-equiv="Content-Security-Policy" content="default-src https:; frame-src https://www.desmos.com https://*.desmos.com; child-src https://www.desmos.com https://*.desmos.com; script-src https: 'unsafe-inline'; style-src https: 'unsafe-inline';">
-          <title>Online Desmos</title>
-          <style>html,body{height:100%;margin:0;padding:0;}iframe{border:none;width:100vw;height:100vh;}</style>
-        </head>
-        <body>
-          <div style="padding:8px;background:#fff;color:#333;font-size:13px;">Certain features (e.g., signing-in) may not work due to browser security restrictions. For full functionality, please use Desmos in your personal browser.</div>
-          <iframe id="desmos-iframe" src="https://www.desmos.com/calculator" allow="clipboard-write; clipboard-read; fullscreen;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
-        </body>
-        </html>`;
-    })
-  );
   const dataProvider = new DesmosDataProvider(context);
   vscode.window.registerTreeDataProvider("desmosCalcView", dataProvider);
   dataProvider.refresh();
 
   context.subscriptions.push(
+    vscode.window.registerCustomEditorProvider(
+      'desmos.calculator',
+      new DesmosFileEditorProvider(context, dataProvider),
+      { webviewOptions: { retainContextWhenHidden: true } }
+    )
+  );
+
+  const liveShareBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+  context.subscriptions.push(liveShareBar);
+
+  function updateLiveShareBar() {
+    if (liveshare.isActive()) {
+      const role = liveshare.getSessionRole();
+      liveShareBar.text = '$(broadcast) Desmos: Live';
+      liveShareBar.tooltip = `Desmos Live Share active (${role})`;
+      liveShareBar.show();
+    } else {
+      liveShareBar.hide();
+    }
+  }
+
+  liveshare.initialize(context, () => {
+    updateLiveShareBar();
+    dataProvider.refresh();
+  }, (state, _calculatorType) => {
+    if (Date.now() - lastLocalActivity < TYPING_COOLDOWN_MS) {
+      pendingRemoteState = state;
+      clearTimeout(remoteApplyTimer);
+      remoteApplyTimer = setTimeout(() => {
+        if (pendingRemoteState) { applyRemoteState(pendingRemoteState); pendingRemoteState = null; }
+      }, TYPING_COOLDOWN_MS);
+    } else {
+      applyRemoteState(state);
+    }
+  });
+
+  context.subscriptions.push(
     vscode.commands.registerCommand("extension.openDesmos", () => {
-      openDesmosLocal(null, context.extensionUri, dataProvider, 'GraphingCalculator');
+      openDesmosLocal(null, context.extensionUri, dataProvider, 'GraphingCalculator', context);
     }),
     vscode.commands.registerCommand("extension.openDesmos3D", () => {
-      openDesmosLocal(null, context.extensionUri, dataProvider, 'Calculator3D');
+      openDesmosLocal(null, context.extensionUri, dataProvider, 'Calculator3D', context);
     }),
     vscode.commands.registerCommand("extension.openDesmosScientific", () => {
-      openDesmosLocal(null, context.extensionUri, dataProvider, 'ScientificCalculator');
+      openDesmosLocal(null, context.extensionUri, dataProvider, 'ScientificCalculator', context);
     }),
     vscode.commands.registerCommand("extension.openDesmosFourFunction", () => {
-      openDesmosLocal(null, context.extensionUri, dataProvider, 'FourFunctionCalculator');
+      openDesmosLocal(null, context.extensionUri, dataProvider, 'FourFunctionCalculator', context);
     }),
     vscode.commands.registerCommand("extension.openDesmosGeometry", () => {
-      openDesmosLocal(null, context.extensionUri, dataProvider, 'Geometry');
+      openDesmosLocal(null, context.extensionUri, dataProvider, 'Geometry', context);
     }),
     vscode.commands.registerCommand("extension.togglePrerelease", () => {
       usePrerelease = !usePrerelease;
@@ -239,32 +429,11 @@ function activate(context) {
       panel.webview.postMessage({ command: "export" });
       dataProvider.refresh();
     }),
-    vscode.commands.registerCommand("extension.importJson", async () => {
-      let panel = getPanel();
-      if (!panel) {
-        openDesmosLocal(null, context.extensionUri, dataProvider);
-        panel = getPanel();
-      }
-      const files = await vscode.window.showOpenDialog({ canSelectMany: false, filters: { JSON: ["json"] } });
-      if (files && files.length > 0) {
-        const fileContent = fs.readFileSync(files[0].fsPath, "utf8");
-        let jsonData;
-        try {
-          jsonData = JSON.parse(fileContent);
-        } catch {
-          vscode.window.showErrorMessage("Invalid JSON file");
-          return;
-        }
-        setTempImport(panel, jsonData);
-        panel.webview.postMessage({ command: "import", data: jsonData });
-        vscode.window.showInformationMessage("Data imported into the active panel");
-      }
-    }),
     vscode.commands.registerCommand("extension.recoverData", (item) => {
       const parsedItem = JSON.parse(item);
       const { version, data, timestamp, calculatorType } = parsedItem;
       if (version === 'prerelease') usePrerelease = true;
-      openDesmosLocal(data, context.extensionUri, dataProvider, calculatorType || 'GraphingCalculator');
+      openDesmosLocal(data, context.extensionUri, dataProvider, calculatorType || 'GraphingCalculator', context);
       const ws = context.workspaceState;
       const existing = ws.get('unsavedData', []);
       ws.update('unsavedData', existing.filter(x => x !== item));

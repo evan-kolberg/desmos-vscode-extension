@@ -8,6 +8,30 @@
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}"
       ]
+    },
+    {
+      "name": "Extension Host 1 (Live Share test)",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--profile-temp"
+      ]
+    },
+    {
+      "name": "Extension Host 2 (Live Share test)",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--profile-temp"
+      ]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Two Extension Hosts (Live Share)",
+      "configurations": ["Extension Host 1 (Live Share test)", "Extension Host 2 (Live Share test)"]
     }
   ]
 }

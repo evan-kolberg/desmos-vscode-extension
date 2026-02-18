@@ -35,6 +35,11 @@ describe('DesmosDataProvider', () => {
           _data: {},
           get(key, defaultVal) { return this._data[key] ?? defaultVal; },
           update(key, val) { this._data[key] = val; }
+        },
+        globalState: {
+          _data: {},
+          get(key, defaultVal) { return this._data[key] ?? defaultVal; },
+          update(key, val) { this._data[key] = val; }
         }
       };
     });
@@ -50,10 +55,8 @@ describe('DesmosDataProvider', () => {
         'extension.openDesmosFourFunction',
         'extension.openDesmosGeometry',
         'extension.togglePrerelease',
-        'extension.openOnlineDesmos',
         'extension.randomizeSeed',
         'extension.exportJson',
-        'extension.importJson',
         'extension.clearUnsavedData',
         'extension.recoverData'
       ];
@@ -99,6 +102,11 @@ describe('Recovery System', () => {
       extensionUri: mock.Uri.file('/test/extension'),
       subscriptions: [],
       workspaceState: {
+        _data: {},
+        get(key, defaultVal) { return this._data[key] ?? defaultVal; },
+        update(key, val) { this._data[key] = val; }
+      },
+      globalState: {
         _data: {},
         get(key, defaultVal) { return this._data[key] ?? defaultVal; },
         update(key, val) { this._data[key] = val; }

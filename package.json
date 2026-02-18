@@ -1,7 +1,7 @@
 {
   "name": "desmos-graphing-calculator",
   "displayName": "Desmos Software Suite",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "publisher": "evan-kolberg",
   "license": "MIT",
   "categories": [
@@ -73,10 +73,6 @@
         "title": "Desmos: Toggle Prerelease Version"
       },
       {
-        "command": "extension.openOnlineDesmos",
-        "title": "Desmos: Open Online Desmos (Web)"
-      },
-      {
         "command": "extension.randomizeSeed",
         "title": "Desmos: Randomize Seed"
       },
@@ -85,17 +81,23 @@
         "title": "Desmos: Export Data"
       },
       {
-        "command": "extension.importJson",
-        "title": "Desmos: Import Data"
-      },
-      {
         "command": "extension.clearUnsavedData",
         "title": "Desmos: Clear Recovery Items"
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "desmos.calculator",
+        "displayName": "Desmos Calculator",
+        "selector": [
+          { "filenamePattern": "*.desmos" }
+        ],
+        "priority": "default"
       }
     ]
   },
   "scripts": {
-    "test": "mocha --require test/setup.js --timeout 10000"
+    "test": "mocha --require test/setup.js --timeout 10000 --exit"
   },
   "dependencies": {},
   "devDependencies": {

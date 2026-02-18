@@ -8,6 +8,7 @@ Thanks for your interest in contributing to the Desmos VS Code Extension!
 2. Install dependencies: `npm install`
 3. Open the project in VS Code
 4. Press `F5` to launch the Extension Development Host for testing
+(this should open 2 VSCode windows so you can test the liveshare feature)
 
 ## Making Changes
 
@@ -17,6 +18,8 @@ Thanks for your interest in contributing to the Desmos VS Code Extension!
 4. Commit your changes with a descriptive message
 5. Push to your fork and open a Pull Request
 
+6. I'll say LGTM!!! and then merge
+
 ## Reporting Bugs
 
 Open an issue on [GitHub](https://github.com/evan-kolberg/desmos-vscode-extension/issues) with:
@@ -25,8 +28,4 @@ Open an issue on [GitHub](https://github.com/evan-kolberg/desmos-vscode-extensio
 - Expected vs actual behavior
 - VS Code version and OS
 
-## Code Style
 
-- Keep it simple and readable
-- Follow the existing patterns in the codebase
-- Test your changes before submitting

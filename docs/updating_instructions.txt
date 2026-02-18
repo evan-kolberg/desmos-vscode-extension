@@ -1,29 +1,32 @@
-check https://www.desmos.com/api/changelog?lang=en
-the topmost one is the latest, stable release
-click it
-then manipulate the link to bump the version up by 0.01 (1.11 -> 1.12)
-see if it exists
-if it does, then that is the prerelease version -- not yet included in the changelog
+Finding the new versions
+------------------------
+1. Check https://www.desmos.com/api/changelog?lang=en
+   - The topmost entry is the latest stable release (e.g. v1.11.4)
+2. Bump the minor version by 0.01 in the URL to find the prerelease (e.g. v1.11 → v1.12)
+   - If that page exists, it is the current prerelease
 
-1. download sources for both
-2. delete old versions & old .vsix from the repo
-3. open up packages.json and bump version
-4. in packages.json, change displayed versions for the commands
-5. open up extension.js
-5. in extension.js, change labels, titles, and paths
+Updating the files
+------------------
+3. Download both versions of the Desmos API source into lib/
+4. Delete the old .js versions from lib/
 
-6. press F5, and then select vscode extension development to test
-7. make sure that everything works properly
+5. In src/extension.js, update the two version constants near the top of openDesmosLocal():
+   - `file`: the filenames of the downloaded scripts (prerelease and stable)
+   - `versionLabel`: short display strings used in panel titles (e.g. 'v1.12-pre' / 'v1.11.4')
 
-* for maintainer:
-8. run: npm install -g vsce
-9. run: vsce package
-10. run: vsce publish
+6. In src/extension.js, update the label strings inside DesmosDataProvider.getChildren():
+   - The prerelease/stable toggle label and tooltip strings (search for 'v1.12' / 'v1.11.4')
 
-8. or 11. stage, commit, & push 
+7. In package.json, bump `"version"` (e.g. 0.5.0 → 0.5.1)
 
+Testing & publishing
+--------------------
+8. Run: npm test   (all tests should pass)
+9. Press F5 and select "VS Code Extension Development" to smoke-test in a live host
 
-
-
-
+* For maintainer:
+10. Run: npm install -g vsce
+11. Run: vsce package
+12. Run: vsce publish*** just upload the .vsix to the azure site, keys are too much of a pain in the ass to renew and work with
+13. Stage, commit, & push
 
